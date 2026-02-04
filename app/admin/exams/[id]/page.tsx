@@ -46,13 +46,13 @@ export default function ExamDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (exam) {
       reset({
-        title: exam.title,
-        description: exam.description ?? '',
-        startDate: exam.startDate?.slice(0, 16) ?? '',
-        endDate: exam.endDate?.slice(0, 16) ?? '',
-        duration: exam.duration,
-        totalScore: exam.totalScore,
-        passingScore: exam.passingScore,
+        name: exam.name,
+        category: exam.category,
+        totalQuestions: exam.totalQuestions,
+        correctAnswers: exam.correctAnswers ?? {},
+        questionScores: exam.questionScores ?? {},
+        questionTypes: exam.questionTypes ?? {},
+        passScore: exam.passScore ?? undefined,
       });
     }
   }, [exam, reset]);
@@ -144,54 +144,22 @@ export default function ExamDetailPage({ params }: PageProps) {
             <Input
               label="시험명 *"
               type="text"
-              error={errors.title?.message}
-              {...register('title')}
+              error={errors.name?.message}
+              {...register('name')}
             />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                설명
-              </label>
-              <textarea
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-                {...register('description')}
-              />
-            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="시작일"
-                type="datetime-local"
-                error={errors.startDate?.message}
-                {...register('startDate')}
-              />
-              <Input
-                label="종료일"
-                type="datetime-local"
-                error={errors.endDate?.message}
-                {...register('endDate')}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <Input
-                label="제한 시간 (분)"
+                label="문항 수"
                 type="number"
-                error={errors.duration?.message}
-                {...register('duration', { valueAsNumber: true })}
+                error={errors.totalQuestions?.message}
+                {...register('totalQuestions', { valueAsNumber: true })}
               />
               <Input
-                label="총점"
+                label="합격 점수 (P/NP 전용)"
                 type="number"
-                error={errors.totalScore?.message}
-                {...register('totalScore', { valueAsNumber: true })}
-              />
-              <Input
-                label="합격 점수"
-                type="number"
-                error={errors.passingScore?.message}
-                {...register('passingScore', { valueAsNumber: true })}
+                error={errors.passScore?.message}
+                {...register('passScore', { valueAsNumber: true })}
               />
             </div>
 
@@ -206,8 +174,8 @@ export default function ExamDetailPage({ params }: PageProps) {
         <CardContent className="p-6">
           <ExamResultsView
             examId={examId}
-            totalScore={exam.totalScore}
-            passingScore={exam.passingScore}
+            totalScore={exam.totalPossibleScore ?? 100}
+            passingScore={exam.passScore ?? undefined}
           />
         </CardContent>
       </Card>

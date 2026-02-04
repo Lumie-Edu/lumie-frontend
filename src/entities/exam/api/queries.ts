@@ -116,7 +116,7 @@ export function useExamResults(examId: number) {
   return useQuery({
     queryKey: QUERY_KEYS.results(examId),
     queryFn: () =>
-      examClient.get<PaginatedResponse<ExamResult>>(`/api/v1/exams/${examId}/results`),
+      examClient.get<ExamResult[]>(`/api/v1/exams/${examId}/results`),
     enabled: examId > 0,
   });
 }
@@ -140,5 +140,52 @@ export function useMyExamResults() {
     queryKey: QUERY_KEYS.studentResults(),
     queryFn: () =>
       examClient.get<PaginatedResponse<ExamResult>>('/api/v1/exams/my-results'),
+  });
+}
+
+// Report Generation
+export function useGenerateReport() {
+  return useMutation({
+    mutationFn: async ({ studentId, examId }: { studentId: number; examId: number }) => {
+      const { storage } = await import('@/src/shared/lib/storage');
+      const { ENV } = await import('@/src/shared/config/env');
+
+      const token = storage.getAccessToken();
+      const tenantSlug = storage.getTenantSlug();
+
+      const response = await fetch(
+        `${ENV.EXAM_SERVICE_URL}/api/v1/reports/students/${studentId}/exams/${examId}`,
+        {
+          method: 'POST',
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(tenantSlug && { 'X-Tenant-Slug': tenantSlug }),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: '리포트 생성에 실패했습니다.' }));
+        throw new Error(error.message);
+      }
+
+      const blob = await response.blob();
+      return { blob, studentId, examId };
+    },
+    onSuccess: ({ blob, studentId, examId }) => {
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `report_${studentId}_${examId}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('리포트가 다운로드되었습니다.');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 }

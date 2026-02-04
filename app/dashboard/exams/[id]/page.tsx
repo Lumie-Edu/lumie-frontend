@@ -46,42 +46,25 @@ export default function StudentExamDetailPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{exam.title}</CardTitle>
+          <CardTitle>{exam.name}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {exam.description && (
-            <p className="text-gray-600">{exam.description}</p>
-          )}
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {exam.startDate && (
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-gray-500">시작일</p>
-                  <p className="font-medium">
-                    {new Date(exam.startDate).toLocaleDateString('ko-KR')}
-                  </p>
-                </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <div>
+                <p className="text-gray-500">생성일</p>
+                <p className="font-medium">
+                  {new Date(exam.createdAt).toLocaleDateString('ko-KR')}
+                </p>
               </div>
-            )}
-            {exam.endDate && (
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-gray-500">종료일</p>
-                  <p className="font-medium">
-                    {new Date(exam.endDate).toLocaleDateString('ko-KR')}
-                  </p>
-                </div>
-              </div>
-            )}
-            {exam.duration && (
+            </div>
+            {exam.totalQuestions && (
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-gray-400" />
                 <div>
-                  <p className="text-gray-500">제한 시간</p>
-                  <p className="font-medium">{exam.duration}분</p>
+                  <p className="text-gray-500">문항 수</p>
+                  <p className="font-medium">{exam.totalQuestions}문항</p>
                 </div>
               </div>
             )}
@@ -89,14 +72,14 @@ export default function StudentExamDetailPage({ params }: PageProps) {
               <Award className="w-4 h-4 text-gray-400" />
               <div>
                 <p className="text-gray-500">총점</p>
-                <p className="font-medium">{exam.totalScore}점</p>
+                <p className="font-medium">{exam.totalPossibleScore ?? 100}점</p>
               </div>
             </div>
           </div>
 
-          {exam.passingScore && (
+          {exam.passScore && (
             <p className="text-sm text-gray-600">
-              합격 기준: {exam.passingScore}점 이상
+              합격 기준: {exam.passScore}점 이상
             </p>
           )}
         </CardContent>

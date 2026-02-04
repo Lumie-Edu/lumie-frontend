@@ -50,7 +50,7 @@ spec:
         fsGroup: 1001
       containers:
       - name: lumie-frontend
-        image: %s/dev/lumie-frontend:dev
+        image: %s/dev/lumie-frontend
         imagePullPolicy: Always
         ports:
         - name: http
@@ -160,24 +160,11 @@ config:
 plugin: cors
 ''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
 
-# Create generated YAML directory
-local('mkdir -p .tilt/generated', quiet=True)
-
 # Combine all YAML for frontend
 combined_yaml = deployment_yaml + '\n---\n' + service_yaml + '\n---\n' + ingress_yaml + '\n---\n' + cors_plugin_yaml
 
-# Write YAML to file for explicit apply/delete
-yaml_path = '.tilt/generated/lumie-frontend.yaml'
-local("cat > '%s' << 'TILT_YAML_EOF'\n%s\nTILT_YAML_EOF" % (yaml_path, combined_yaml), quiet=True)
-
-# Use k8s_custom_deploy for explicit delete_cmd (ensures cleanup on tilt down)
-k8s_custom_deploy(
-    'lumie-frontend',
-    apply_cmd='kubectl apply -f %s' % yaml_path,
-    delete_cmd='kubectl delete -f %s --ignore-not-found' % yaml_path,
-    deps=[yaml_path],
-    image_deps=['%s/dev/lumie-frontend' % REGISTRY],
-)
+# Apply YAML using k8s_yaml (handles automatic image tag injection)
+k8s_yaml(blob(combined_yaml))
 
 # Docker build with live_update (true hot reload for Next.js)
 docker_build(

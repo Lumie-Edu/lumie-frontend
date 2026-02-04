@@ -1,12 +1,18 @@
 export {
   type Exam,
   type ExamStatus,
+  type ExamCategory,
+  type GradingType,
+  type GradeScale,
   type CreateExamInput,
   type UpdateExamInput,
   type ExamResult,
   type SubmitExamResultInput,
   examSchema,
   examStatusSchema,
+  examCategorySchema,
+  gradingTypeSchema,
+  gradeScaleSchema,
   createExamSchema,
   updateExamSchema,
   examResultSchema,
@@ -24,6 +30,7 @@ export {
   useExamResults,
   useSubmitExamResult,
   useMyExamResults,
+  useGenerateReport,
 } from './api/queries';
 
 export { ExamCard } from './ui/ExamCard';

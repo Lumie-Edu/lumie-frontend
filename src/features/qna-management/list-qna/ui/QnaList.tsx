@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQnaList, useMyQnaList, useDeleteQna } from '@/entities/qna';
+import { useQnaList, useDeleteQna } from '@/entities/qna';
 import { useAcademies } from '@/entities/academy';
 import { Button } from '@/src/shared/ui/Button';
 import { Card, CardContent } from '@/src/shared/ui/Card';
@@ -24,10 +24,10 @@ export function QnaList({ isAdmin = false }: QnaListProps) {
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
   const { data: academiesData } = useAcademies();
 
-  const adminQuery = useQnaList({ academyId: selectedAcademy, status: selectedStatus });
-  const studentQuery = useMyQnaList();
-
-  const { data, isLoading, error } = isAdmin ? adminQuery : studentQuery;
+  const { data, isLoading, error } = useQnaList({
+    academyId: selectedAcademy,
+    status: selectedStatus,
+  });
   const { mutate: deleteQna, isPending: isDeleting } = useDeleteQna();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 

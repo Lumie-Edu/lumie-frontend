@@ -1,12 +1,12 @@
 export {
   type Schedule,
-  type ScheduleStatus,
   type CreateScheduleInput,
   type Reservation,
+  type ReservationStatus,
   scheduleSchema,
-  scheduleStatusSchema,
   createScheduleSchema,
   reservationSchema,
+  reservationStatusSchema,
 } from './model/schema';
 
 export {
@@ -14,7 +14,4 @@ export {
   useSchedule,
   useCreateSchedule,
   useDeleteSchedule,
-  useMyReservations,
-  useBookSchedule,
-  useCancelReservation,
 } from './api/queries';

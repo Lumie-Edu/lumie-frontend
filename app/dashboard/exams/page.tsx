@@ -88,7 +88,7 @@ export default function StudentExamsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {new Date(result.submittedAt).toLocaleDateString('ko-KR')}
+                      {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString('ko-KR') : '-'}
                     </td>
                   </tr>
                 ))}

@@ -6,7 +6,8 @@ import { Button } from '@/src/shared/ui/Button';
 import { Input } from '@/src/shared/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/shared/ui/Card';
 import { useState } from 'react';
-import { CheckCircle, XCircle, Plus } from 'lucide-react';
+import { CheckCircle, XCircle, Plus, FileText } from 'lucide-react';
+import { ReportButton } from './ReportButton';
 
 interface ExamResultsViewProps {
   examId: number;
@@ -38,7 +39,7 @@ export function ExamResultsView({ examId, totalScore, passingScore }: ExamResult
     );
   };
 
-  const results = data?.content ?? [];
+  const results = data ?? [];
   const students = studentsData?.content ?? [];
 
   if (isLoading) {
@@ -111,6 +112,7 @@ export function ExamResultsView({ examId, totalScore, passingScore }: ExamResult
                 <th className="px-4 py-3 text-left">점수</th>
                 <th className="px-4 py-3 text-left">합격 여부</th>
                 <th className="px-4 py-3 text-left">제출일</th>
+                <th className="px-4 py-3 text-center">리포트</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -137,7 +139,14 @@ export function ExamResultsView({ examId, totalScore, passingScore }: ExamResult
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {new Date(result.submittedAt).toLocaleDateString('ko-KR')}
+                    {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString('ko-KR') : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ReportButton
+                      studentId={result.studentId}
+                      examId={examId}
+                      studentName={result.studentName}
+                    />
                   </td>
                 </tr>
               ))}

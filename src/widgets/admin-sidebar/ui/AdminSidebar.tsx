@@ -95,10 +95,10 @@ const navGroups: NavGroup[] = [
     icon: TrendingUp,
     items: [
       { href: null, label: '과제 관리', icon: ClipboardList },
-      { href: null, label: '성적 관리', icon: BarChart3 },
-      { href: null, label: '시험 채점', icon: ClipboardCheck },
-      { href: null, label: '학습 리포트', icon: FileText },
-      { href: null, label: '리스닝 생성', icon: Headphones },
+      { href: '/admin/grades', label: '성적 관리', icon: BarChart3 },
+      { href: '/admin/omr-grading', label: '시험 채점', icon: ClipboardCheck },
+      { href: '/admin/reports', label: '학습 리포트', icon: FileText },
+      { href: '/admin/listening', label: '리스닝 생성', icon: Headphones },
     ],
   },
   {

@@ -15,6 +15,15 @@ import {
   Apple,
 } from 'lucide-react';
 
+// Pre-generated waveform heights to avoid hydration mismatch from Math.random()
+const WAVEFORM_HEIGHTS = [
+  35, 52, 28, 65, 42, 58, 30, 70, 45, 38,
+  55, 25, 68, 48, 32, 60, 40, 72, 35, 50,
+  62, 28, 55, 45, 38, 70, 32, 58, 48, 25,
+  65, 42, 55, 30, 68, 52, 38, 60, 45, 72,
+  35, 48, 62, 28, 55, 40, 70, 32, 58, 50,
+];
+
 export default function SuperAgents() {
   return (
     <section className="py-20 md:py-32 bg-white">
@@ -214,11 +223,11 @@ export default function SuperAgents() {
                 <div className="bg-neutral-800 rounded-xl p-6">
                   {/* Waveform visualization */}
                   <div className="h-20 flex items-center justify-center gap-0.5 mb-6">
-                    {Array.from({ length: 50 }).map((_, i) => (
+                    {WAVEFORM_HEIGHTS.map((height, i) => (
                       <div
                         key={i}
                         className="w-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full"
-                        style={{ height: `${Math.random() * 60 + 10}%` }}
+                        style={{ height: `${height}%` }}
                       />
                     ))}
                   </div>
