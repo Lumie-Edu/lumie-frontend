@@ -9,8 +9,8 @@ RUN apk add --no-cache libc6-compat
 # Create non-root user
 RUN addgroup -g 1001 nodejs && adduser -u 1001 -G nodejs -D nextjs
 
-# Copy package files
-COPY --chown=nextjs:nodejs package.json package-lock.json ./
+# Copy package files and npm config
+COPY --chown=nextjs:nodejs package.json package-lock.json .npmrc ./
 
 # Install dependencies as root, then fix ownership
 RUN npm ci && chown -R nextjs:nodejs /app
