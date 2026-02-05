@@ -124,3 +124,5 @@ export const authClient = createServiceClient(ENV.AUTH_SERVICE_URL);
 export const academyClient = createServiceClient(ENV.ACADEMY_SERVICE_URL);
 export const examClient = createServiceClient(ENV.EXAM_SERVICE_URL);
 export const contentClient = createServiceClient(ENV.CONTENT_SERVICE_URL);
+export const fileClient = createServiceClient(ENV.FILE_SERVICE_URL);
+export const spreadsheetClient = createServiceClient(ENV.SPREADSHEET_SERVICE_URL);

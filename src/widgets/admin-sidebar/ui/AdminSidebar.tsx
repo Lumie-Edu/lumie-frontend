@@ -16,7 +16,6 @@ import {
   BookOpen,
   LayoutGrid,
   Star,
-  Building2,
   ChevronRight,
   ChevronsUpDown,
   LogOut,
@@ -25,19 +24,13 @@ import {
   ClipboardList,
   Send,
   CreditCard,
-  Package,
   Wallet,
   GraduationCap,
   BarChart3,
   Calendar,
-  ChartPie,
-  Target,
-  LineChart,
-  SearchX,
   Sparkles,
-  ArrowUpRight,
-  Building,
   Globe,
+  Table,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -102,16 +95,6 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: '분석',
-    icon: ChartPie,
-    items: [
-      { href: null, label: '백분위/석차', icon: Target },
-      { href: null, label: '성적 안정성', icon: LineChart },
-      { href: null, label: '성장 추이', icon: ArrowUpRight },
-      { href: null, label: '오답 분석', icon: SearchX },
-    ],
-  },
-  {
     label: '소통',
     icon: MessageSquare,
     items: [
@@ -127,17 +110,10 @@ const navGroups: NavGroup[] = [
     icon: Wallet,
     items: [
       { href: null, label: '비용 수납', icon: CreditCard },
-      { href: null, label: '재고 관리', icon: Package },
-      { href: null, label: '교재 관리', icon: BookOpen },
-    ],
-  },
-  {
-    label: '학원 정보',
-    icon: Building2,
-    items: [
+      { href: '/admin/textbooks', label: '교재 관리', icon: BookOpen },
+      { href: '/admin/spreadsheets', label: '스프레드시트', icon: Table },
       { href: '/admin/academies', label: '단과 관리', icon: LayoutGrid },
       { href: '/admin/reviews', label: '리뷰 관리', icon: Star },
-      { href: null, label: '학원 성장률', icon: Building },
     ],
   },
 ];

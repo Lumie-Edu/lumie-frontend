@@ -14,8 +14,14 @@ export {
   useStudent,
   useCreateStudent,
   useUpdateStudent,
+  useDeactivateStudent,
+  useReactivateStudent,
   useDeleteStudent,
   useBulkImportStudents,
+  useBatchDeactivate,
+  useBatchReactivate,
+  useBatchDelete,
+  type SearchField,
 } from './api/queries';
 
 export { StudentCard } from './ui/StudentCard';

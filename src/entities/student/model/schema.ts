@@ -47,6 +47,7 @@ export const updateStudentSchema = z.object({
   studentHighschool: z.string().optional(),
   studentBirthYear: z.number().optional(),
   studentMemo: z.string().optional(),
+  academyId: z.number().optional(),
 });
 
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;

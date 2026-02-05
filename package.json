@@ -47,7 +47,9 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "@stomp/stompjs": "^7.0.0",
+    "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.1",

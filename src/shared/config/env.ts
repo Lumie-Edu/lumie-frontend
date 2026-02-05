@@ -17,4 +17,8 @@ export const ENV = {
     process.env.NEXT_PUBLIC_GRADING_SERVICE_URL || '/api/grading',
   AUDIO_SERVICE_URL:
     process.env.NEXT_PUBLIC_AUDIO_SERVICE_URL || '/api/audio',
+  SPREADSHEET_SERVICE_URL:
+    process.env.NEXT_PUBLIC_SPREADSHEET_SERVICE_URL || '/api/spreadsheet',
+  SPREADSHEET_WS_URL:
+    process.env.NEXT_PUBLIC_SPREADSHEET_WS_URL || '/ws/spreadsheet',
 } as const;
