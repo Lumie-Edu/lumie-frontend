@@ -47,4 +47,28 @@ export const storage = {
       return null;
     }
   },
+
+  getUserId(): number | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const session = localStorage.getItem(SESSION_KEY);
+      if (!session) return null;
+      const parsed = JSON.parse(session);
+      return parsed?.state?.user?.id ?? null;
+    } catch {
+      return null;
+    }
+  },
+
+  getUserName(): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const session = localStorage.getItem(SESSION_KEY);
+      if (!session) return null;
+      const parsed = JSON.parse(session);
+      return parsed?.state?.user?.name ?? null;
+    } catch {
+      return null;
+    }
+  },
 };
