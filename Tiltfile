@@ -67,14 +67,16 @@ spec:
           httpGet:
             path: /
             port: http
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /
             port: http
-          initialDelaySeconds: 10
+          initialDelaySeconds: 45
           periodSeconds: 5
+          timeoutSeconds: 5
         securityContext:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
@@ -200,6 +202,8 @@ docker_build(
         '*.log',
         '.env*',
         'tsconfig.tsbuildinfo',
+        '*.tmp*',
+        '**/*.tmp*',
     ],
 )
 

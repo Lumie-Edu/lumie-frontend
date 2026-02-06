@@ -64,6 +64,9 @@ export class SpreadsheetWebSocketClient {
 
   private getWebSocketUrl(): string {
     const wsUrl = ENV.SPREADSHEET_WS_URL;
+    if (typeof window === 'undefined') {
+      return wsUrl;
+    }
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
       return `${protocol}//${window.location.host}${wsUrl}`;
