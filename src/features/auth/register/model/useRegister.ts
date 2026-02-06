@@ -13,7 +13,8 @@ export function useRegister() {
     // Use tenantSlug from the request body
     mutationFn: (request: RegisterRequest) => registerApi(request, request.tenantSlug),
     onSuccess: (data) => {
-      login(data.user, data.accessToken, data.refreshToken);
+      // Tokens are set via HttpOnly cookies by the server
+      login(data.user);
 
       // Redirect based on role
       if (data.user.role === 'STUDENT') {

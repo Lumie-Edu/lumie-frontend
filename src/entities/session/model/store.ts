@@ -10,8 +10,7 @@ interface SessionState {
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
-  login: (user: User, accessToken: string, refreshToken: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -49,12 +48,8 @@ export const useSessionStore = create<SessionState>()(
           isAuthenticated: user !== null,
         }),
 
-      setTokens: (accessToken, refreshToken) => {
-        storage.setTokens(accessToken, refreshToken);
-      },
-
-      login: (user, accessToken, refreshToken) => {
-        storage.setTokens(accessToken, refreshToken);
+      login: (user) => {
+        // Tokens are handled via HttpOnly cookies - no need to store them
         set({
           user,
           isAuthenticated: true,
@@ -63,7 +58,7 @@ export const useSessionStore = create<SessionState>()(
       },
 
       logout: () => {
-        storage.clearTokens();
+        storage.clearSession();
         set({
           user: null,
           isAuthenticated: false,

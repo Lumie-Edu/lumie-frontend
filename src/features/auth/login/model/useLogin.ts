@@ -14,7 +14,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: (request: LoginRequest) => loginApi(request),
     onSuccess: (data) => {
-      login(data.user, data.accessToken, data.refreshToken);
+      // Tokens are set via HttpOnly cookies by the server
+      login(data.user);
       closeModal();
 
       // Check for callback URL

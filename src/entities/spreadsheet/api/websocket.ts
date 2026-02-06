@@ -77,22 +77,20 @@ export class SpreadsheetWebSocketClient {
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
 
+    // Authentication is handled via HttpOnly cookies
+    // Cookies are automatically sent with WebSocket upgrade request
+
     const tenantSlug = storage.getTenantSlug();
     if (tenantSlug) {
       headers['X-Tenant-Slug'] = tenantSlug;
     }
 
-    const token = storage.getAccessToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const userId = storage.getUserId?.();
+    const userId = storage.getUserId();
     if (userId) {
       headers['X-User-Id'] = String(userId);
     }
 
-    const userName = storage.getUserName?.();
+    const userName = storage.getUserName();
     if (userName) {
       headers['X-User-Name'] = userName;
     }

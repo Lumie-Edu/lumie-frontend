@@ -14,7 +14,8 @@ export function useRegisterOwner() {
   return useMutation({
     mutationFn: (request: OwnerRegisterRequest) => registerOwnerApi(request),
     onSuccess: (data) => {
-      login(data.user, data.accessToken, data.refreshToken);
+      // Tokens are set via HttpOnly cookies by the server
+      login(data.user);
       closeModal();
       router.push('/admin');
     },

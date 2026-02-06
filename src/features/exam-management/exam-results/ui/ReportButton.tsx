@@ -29,7 +29,6 @@ export function ReportButton({
     const { storage } = await import('@/src/shared/lib/storage');
     const { ENV } = await import('@/src/shared/config/env');
 
-    const token = storage.getAccessToken();
     const tenantSlug = storage.getTenantSlug();
 
     try {
@@ -37,8 +36,8 @@ export function ReportButton({
         `${ENV.EXAM_SERVICE_URL}/api/v1/reports/students/${studentId}/exams/${examId}`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
             ...(tenantSlug && { 'X-Tenant-Slug': tenantSlug }),
           },
         }

@@ -30,12 +30,17 @@ export const authTokensSchema = z.object({
 
 export type AuthTokens = z.infer<typeof authTokensSchema>;
 
-// Login response schema
-export const loginResponseSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
+// Auth response schema (cookie-based - tokens set via Set-Cookie header)
+export const authResponseSchema = z.object({
   accessExpiresIn: z.number(),
   refreshExpiresIn: z.number(),
+  user: userSchema.nullable(),
+});
+
+export type AuthResponse = z.infer<typeof authResponseSchema>;
+
+// Login response schema (includes user)
+export const loginResponseSchema = authResponseSchema.extend({
   user: userSchema,
 });
 

@@ -1,4 +1,4 @@
-// Base API client with error handling and authentication
+// Base API client with error handling and cookie-based authentication
 
 import { ApiError } from '@/src/shared/types/api';
 import { storage } from '@/src/shared/lib/storage';
@@ -7,13 +7,57 @@ import { toast } from 'sonner';
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
+  _isRetry?: boolean;
+}
+
+// Token refresh state management
+let isRefreshing = false;
+let refreshPromise: Promise<Response> | null = null;
+
+async function tryRefreshToken(): Promise<boolean> {
+  // If already refreshing, wait for the existing promise
+  if (isRefreshing && refreshPromise) {
+    const response = await refreshPromise;
+    return response.ok;
+  }
+
+  isRefreshing = true;
+  refreshPromise = fetch(`${ENV.AUTH_SERVICE_URL}/api/v1/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  try {
+    const response = await refreshPromise;
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    isRefreshing = false;
+    refreshPromise = null;
+  }
+}
+
+function handleAuthFailure(): void {
+  storage.clearSession();
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
+  }
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Unknown error' }));
     const errorMessage = error.message || `HTTP ${response.status}`;
-    toast.error(errorMessage);
+
+    // Don't show toast for 401 errors (will be handled by retry logic)
+    if (response.status !== 401) {
+      toast.error(errorMessage);
+    }
+
     throw {
       status: response.status,
       message: errorMessage,
@@ -29,27 +73,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
-function getHeaders(
-  options: RequestOptions,
-  tenantSlug?: string
-): HeadersInit {
-  // Priority: explicit param > session (no default - error if needed but not available)
+function getHeaders(options: RequestOptions, tenantSlug?: string): HeadersInit {
   const slug = tenantSlug ?? storage.getTenantSlug();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  // Only add X-Tenant-Slug if available
   if (slug) {
     (headers as Record<string, string>)['X-Tenant-Slug'] = slug;
-  }
-
-  if (!options.skipAuth) {
-    const token = storage.getAccessToken();
-    if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    }
   }
 
   return headers;
@@ -62,8 +94,25 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     ...options,
+    credentials: 'include', // Always include cookies
     headers: getHeaders(options, tenantSlug),
   });
+
+  // Handle 401 with token refresh
+  if (response.status === 401 && !options._isRetry && !options.skipAuth) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      // Retry the original request
+      return apiRequest<T>(url, { ...options, _isRetry: true }, tenantSlug);
+    } else {
+      handleAuthFailure();
+      throw {
+        status: 401,
+        message: 'Session expired',
+        code: 'SESSION_EXPIRED',
+      } as ApiError;
+    }
+  }
 
   return handleResponse<T>(response);
 }
