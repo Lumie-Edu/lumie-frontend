@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneSchema, phoneSchemaApi } from '@/src/shared/lib/validation';
 
 // User login ID regex (letters, numbers, underscores only)
 const userLoginIdRegex = /^[a-zA-Z0-9_]+$/;
@@ -8,7 +9,7 @@ export const studentSchema = z.object({
   userId: z.number(),
   userLoginId: z.string(),
   name: z.string(),
-  phone: z.string().nullable().optional(),
+  phone: phoneSchemaApi,
   academyId: z.number(),
   academyName: z.string(),
   studentHighschool: z.string().nullable().optional(),
@@ -32,7 +33,7 @@ export const createStudentSchema = z.object({
     .min(8, '비밀번호는 최소 8자 이상이어야 합니다.')
     .max(128, '비밀번호는 128자를 초과할 수 없습니다.'),
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.'),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   academyId: z.number({ message: '학원을 선택해주세요.' }),
   studentHighschool: z.string().optional(),
   studentBirthYear: z.number().optional(),
@@ -43,7 +44,7 @@ export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 
 export const updateStudentSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.').optional(),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   studentHighschool: z.string().optional(),
   studentBirthYear: z.number().optional(),
   studentMemo: z.string().optional(),
@@ -59,7 +60,7 @@ export const bulkImportStudentSchema = z.object({
       userLoginId: z.string().min(4).regex(userLoginIdRegex),
       password: z.string().min(8),
       name: z.string().min(2),
-      phone: z.string().optional(),
+      phone: phoneSchema,
       studentHighschool: z.string().optional(),
       studentBirthYear: z.number().optional(),
     })

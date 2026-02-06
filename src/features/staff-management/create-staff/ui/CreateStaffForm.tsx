@@ -78,7 +78,7 @@ export function CreateStaffForm({ onSuccess }: CreateStaffFormProps) {
         <Input
           id="phone"
           type="tel"
-          placeholder="010-1234-5678"
+          placeholder="01012345678"
           {...register('phone')}
         />
         {errors.phone && (

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneSchema, phoneSchemaApi } from '@/src/shared/lib/validation';
 
 const academyInfoSchema = z.object({
   id: z.number(),
@@ -10,7 +11,7 @@ export const staffSchema = z.object({
   userId: z.number(),
   userLoginId: z.string(),
   name: z.string(),
-  phone: z.string().nullable().optional(),
+  phone: phoneSchemaApi,
   academies: z.array(academyInfoSchema).optional(),
   adminPosition: z.string().nullable().optional(),
   adminMemo: z.string().nullable().optional(),
@@ -30,7 +31,7 @@ export const createStaffSchema = z.object({
     .max(50, '아이디는 50자를 초과할 수 없습니다.')
     .regex(userLoginIdRegex, '아이디는 영문, 숫자, 밑줄(_)만 사용할 수 있습니다.'),
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.'),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   academyIds: z.array(z.number()).optional(),
   adminPosition: z.string().optional(),
   adminMemo: z.string().optional(),
@@ -40,7 +41,7 @@ export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 
 export const updateStaffSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.').optional(),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   academyIds: z.array(z.number()).optional(),
   adminPosition: z.string().optional(),
   adminMemo: z.string().optional(),

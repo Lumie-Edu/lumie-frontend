@@ -7,6 +7,7 @@ import { useAcademies } from '@/entities/academy';
 import { Button } from '@/src/shared/ui/Button';
 import { ApiError } from '@/src/shared/types/api';
 import { Upload, FileText, X } from 'lucide-react';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface ParsedStudent {
   userLoginId: string;
@@ -166,7 +167,7 @@ export function BulkImportForm() {
                   <tr key={index}>
                     <td className="px-4 py-2">{student.name}</td>
                     <td className="px-4 py-2">{student.userLoginId}</td>
-                    <td className="px-4 py-2">{student.phone || '-'}</td>
+                    <td className="px-4 py-2">{student.phone ? formatPhoneNumber(student.phone) : '-'}</td>
                     <td className="px-4 py-2">{student.studentHighschool || '-'}</td>
                     <td className="px-4 py-2">
                       <button

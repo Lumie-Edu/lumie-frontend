@@ -98,7 +98,7 @@ export function RegisterStudentForm() {
       <Input
         label="연락처"
         type="tel"
-        placeholder="학생 연락처를 입력하세요"
+        placeholder="01012345678"
         error={errors.phone?.message}
         {...register('phone')}
       />

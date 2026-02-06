@@ -3,6 +3,7 @@
 import { Academy } from '../model/schema';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/shared/ui/Card';
 import { Building2, MapPin, Phone } from 'lucide-react';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface AcademyCardProps {
   academy: Academy;
@@ -31,7 +32,7 @@ export function AcademyCard({ academy, onClick }: AcademyCardProps) {
         {academy.phone && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Phone className="w-4 h-4" />
-            <span>{academy.phone}</span>
+            <span>{formatPhoneNumber(academy.phone)}</span>
           </div>
         )}
         {academy.description && (

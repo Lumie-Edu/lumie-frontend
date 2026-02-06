@@ -155,7 +155,7 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
             <Input
               id="phone"
               type="tel"
-              placeholder="학생 연락처를 입력하세요"
+              placeholder="01012345678"
               {...register('phone')}
             />
           </div>

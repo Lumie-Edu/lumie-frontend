@@ -26,6 +26,7 @@ import {
 import { Plus, Search, Building2, MapPin, Phone, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { EditAcademyModal } from '../../edit-academy/ui/EditAcademyModal';
 import { ApiError } from '@/src/shared/types/api';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 function AcademyCardSkeleton() {
   return (
@@ -205,7 +206,7 @@ export function AcademyList() {
                 {academy.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span>{academy.phone}</span>
+                    <span>{formatPhoneNumber(academy.phone)}</span>
                   </div>
                 )}
                 {!academy.address && !academy.phone && (
@@ -294,7 +295,7 @@ function CreateAcademyFormDialog({ onSuccess }: { onSuccess: () => void }) {
         <Input
           id="phone"
           type="tel"
-          placeholder="연락처를 입력하세요"
+          placeholder="01012345678"
           {...register('phone')}
         />
       </div>

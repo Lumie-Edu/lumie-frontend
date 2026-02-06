@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneSchema } from '@/src/shared/lib/validation';
 
 // Role enum
 export const RoleSchema = z.enum(['OWNER', 'DEVELOPER', 'ADMIN', 'STUDENT']);
@@ -68,7 +69,7 @@ export const registerRequestSchema = z.object({
     .max(128, '비밀번호는 128자를 초과할 수 없습니다.')
     .regex(passwordRegex, '비밀번호는 대문자, 소문자, 숫자, 특수문자(@$!%*?&)를 각각 하나 이상 포함해야 합니다.'),
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.'),
-  phone: z.string().optional(),
+  phone: phoneSchema,
 });
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
@@ -88,7 +89,7 @@ export const ownerRegisterRequestSchema = z.object({
     .max(128, '비밀번호는 128자를 초과할 수 없습니다.')
     .regex(passwordRegex, '비밀번호는 대문자, 소문자, 숫자, 특수문자(@$!%*?&)를 각각 하나 이상 포함해야 합니다.'),
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.'),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   instituteName: z.string().min(2, '기관명은 최소 2자 이상이어야 합니다.').max(200, '기관명은 200자를 초과할 수 없습니다.'),
   businessRegistrationNumber: z
     .string()

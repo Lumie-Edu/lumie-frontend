@@ -141,7 +141,7 @@ export function EditAcademyModal({ academyId, open, onOpenChange }: EditAcademyM
               <Input
                 id="phone"
                 type="tel"
-                placeholder="연락처를 입력하세요"
+                placeholder="01012345678"
                 {...register('phone')}
               />
             </div>

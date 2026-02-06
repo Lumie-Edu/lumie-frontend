@@ -3,6 +3,7 @@
 import { Student } from '../model/schema';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/shared/ui/Card';
 import { User, Phone, School, Calendar } from 'lucide-react';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface StudentCardProps {
   student: Student;
@@ -25,7 +26,7 @@ export function StudentCard({ student, onClick }: StudentCardProps) {
         {student.phone && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Phone className="w-4 h-4" />
-            <span>{student.phone}</span>
+            <span>{formatPhoneNumber(student.phone)}</span>
           </div>
         )}
         {student.studentBirthYear && (

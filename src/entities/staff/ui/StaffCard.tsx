@@ -3,6 +3,7 @@
 import { User, Trash2, Phone } from 'lucide-react';
 import { Staff } from '../model/schema';
 import { Button } from '@/components/ui/button';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface StaffCardProps {
   staff: Staff;
@@ -60,7 +61,7 @@ export function StaffCard({ staff, onDelete, isDeleting }: StaffCardProps) {
         <div className="border-t border-gray-100 pt-3">
           <div className="flex items-center text-sm text-gray-600">
             <Phone className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{staff.phone || '-'}</span>
+            <span>{staff.phone ? formatPhoneNumber(staff.phone) : '-'}</span>
           </div>
         </div>
 

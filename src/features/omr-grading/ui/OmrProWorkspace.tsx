@@ -20,6 +20,7 @@ import {
     OmrGradableExam,
     BatchOmrResult,
 } from '../api/queries';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface OmrProWorkspaceProps {
     selectedExam: OmrGradableExam | null;
@@ -56,7 +57,7 @@ function ResultCard({ result, index }: { result: BatchOmrResult; index: number }
     }
 
     const phoneDisplay = result.phoneNumber
-        ? `010-${result.phoneNumber.slice(0, 4)}-${result.phoneNumber.slice(4)}`
+        ? formatPhoneNumber(result.phoneNumber)
         : '-';
 
     return (

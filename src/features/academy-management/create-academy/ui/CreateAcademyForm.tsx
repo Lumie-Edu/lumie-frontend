@@ -63,7 +63,7 @@ export function CreateAcademyForm() {
       <Input
         label="연락처"
         type="tel"
-        placeholder="연락처를 입력하세요"
+        placeholder="01012345678"
         error={errors.phone?.message}
         {...register('phone')}
       />

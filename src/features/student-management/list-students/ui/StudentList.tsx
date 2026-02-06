@@ -50,6 +50,7 @@ import {
 import { Plus, Search, MoreHorizontal, Trash2, Edit, UserMinus, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { EditStudentModal } from '../../edit-student/ui/EditStudentModal';
 import { RegisterStudentModal } from '../../register-student/ui/RegisterStudentModal';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 type SortField = 'name' | 'academyName' | 'phone' | 'studentHighschool' | 'studentBirthYear';
 type SortDirection = 'asc' | 'desc';
@@ -448,7 +449,7 @@ export function StudentList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-center">{student.academyName || '-'}</TableCell>
-                    <TableCell className="text-center">{student.phone || '-'}</TableCell>
+                    <TableCell className="text-center">{student.phone ? formatPhoneNumber(student.phone) : '-'}</TableCell>
                     <TableCell className="text-center">{student.studentHighschool || '-'}</TableCell>
                     <TableCell className="text-center">
                       {student.studentBirthYear ? `${student.studentBirthYear}년(${age}세)` : '-'}

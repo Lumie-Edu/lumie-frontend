@@ -1,7 +1,22 @@
+import { z } from 'zod';
+
 // Validation utilities
 
 export const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
+
+// 전화번호 정규식: 010으로 시작하는 11자리 숫자만 허용
+export const PHONE_REGEX = /^010\d{8}$/;
+
+// Zod 전화번호 스키마 (optional)
+export const phoneSchema = z
+  .string()
+  .regex(PHONE_REGEX, '전화번호는 010으로 시작하는 11자리 숫자여야 합니다. (예: 01012345678)')
+  .optional()
+  .or(z.literal(''));
+
+// Zod 전화번호 스키마 (nullable + optional, API 응답용)
+export const phoneSchemaApi = z.string().nullable().optional();
 
 export interface ValidationResult {
   valid: boolean;

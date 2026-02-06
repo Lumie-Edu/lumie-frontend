@@ -93,7 +93,7 @@ export function RegisterForm() {
         <div>
           <input
             type="tel"
-            placeholder="Phone Number"
+            placeholder="01012345678"
             className={`w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all ${
               errors.phone ? 'ring-2 ring-red-500' : ''
             }`}
