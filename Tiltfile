@@ -3,7 +3,7 @@
 # Usage: tilt up
 # Access: https://dev.lumie0213.kro.kr
 
-REGISTRY = 'zot0213.kro.kr'
+REGISTRY = 'zot.lumie-infra.com'
 NAMESPACE = 'lumie-dev'
 DEV_DOMAIN = 'dev.lumie0213.kro.kr'
 
