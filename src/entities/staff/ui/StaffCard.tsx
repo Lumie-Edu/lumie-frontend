@@ -35,9 +35,9 @@ export function StaffCard({ staff, onDelete, isDeleting }: StaffCardProps) {
               <h3 className="text-lg font-bold text-gray-900 mb-1">
                 {staff.name}
               </h3>
-              {staff.adminPosition && (
+              {staff.position && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  {staff.adminPosition}
+                  {staff.position.name}
                 </span>
               )}
             </div>

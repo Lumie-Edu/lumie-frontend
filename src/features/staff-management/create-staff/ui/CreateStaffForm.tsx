@@ -1,11 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateStaff, CreateStaffInput, createStaffSchema } from '@/entities/staff';
+import { useActivePositions } from '@/entities/position';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ApiError } from '@/src/shared/types/api';
 
 interface CreateStaffFormProps {
@@ -16,6 +24,7 @@ export function CreateStaffForm({ onSuccess }: CreateStaffFormProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
   } = useForm<CreateStaffInput>({
@@ -24,11 +33,12 @@ export function CreateStaffForm({ onSuccess }: CreateStaffFormProps) {
       userLoginId: '',
       name: '',
       phone: '',
-      adminPosition: '',
+      positionId: null,
     },
   });
 
   const { mutate: createStaff, isPending, error } = useCreateStaff();
+  const { data: positions } = useActivePositions();
 
   const onSubmit = (data: CreateStaffInput) => {
     createStaff(data, {
@@ -62,14 +72,30 @@ export function CreateStaffForm({ onSuccess }: CreateStaffFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="adminPosition">직책</Label>
-        <Input
-          id="adminPosition"
-          placeholder="예: 강사, 매니저"
-          {...register('adminPosition')}
+        <Label htmlFor="positionId">직책</Label>
+        <Controller
+          name="positionId"
+          control={control}
+          render={({ field }) => (
+            <Select
+              value={field.value?.toString() ?? ''}
+              onValueChange={(value) => field.onChange(value ? Number(value) : null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="직책 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {positions?.map((position) => (
+                  <SelectItem key={position.id} value={position.id.toString()}>
+                    {position.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         />
-        {errors.adminPosition && (
-          <p className="text-sm text-red-500">{errors.adminPosition.message}</p>
+        {errors.positionId && (
+          <p className="text-sm text-red-500">{errors.positionId.message}</p>
         )}
       </div>
 

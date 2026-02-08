@@ -6,6 +6,11 @@ const academyInfoSchema = z.object({
   name: z.string(),
 });
 
+const positionInfoSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
 export const staffSchema = z.object({
   id: z.number(),
   userId: z.number(),
@@ -13,7 +18,7 @@ export const staffSchema = z.object({
   name: z.string(),
   phone: phoneSchemaApi,
   academies: z.array(academyInfoSchema).optional(),
-  adminPosition: z.string().nullable().optional(),
+  position: positionInfoSchema.nullable().optional(),
   adminMemo: z.string().nullable().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
@@ -33,7 +38,7 @@ export const createStaffSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.'),
   phone: phoneSchema,
   academyIds: z.array(z.number()).optional(),
-  adminPosition: z.string().optional(),
+  positionId: z.number().nullable().optional(),
   adminMemo: z.string().optional(),
 });
 
@@ -43,7 +48,7 @@ export const updateStaffSchema = z.object({
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.').optional(),
   phone: phoneSchema,
   academyIds: z.array(z.number()).optional(),
-  adminPosition: z.string().optional(),
+  positionId: z.number().nullable().optional(),
   adminMemo: z.string().optional(),
 });
 

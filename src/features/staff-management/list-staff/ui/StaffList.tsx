@@ -1,10 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useStaffList, useDeleteStaff, StaffCard } from '@/entities/staff';
+import {
+  useActivePositions,
+  useCreatePosition,
+  useUpdatePosition,
+  useDeletePosition,
+  CreatePositionInput,
+  createPositionSchema,
+} from '@/entities/position';
+import type { Position } from '@/entities/position';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -13,8 +25,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Briefcase, Pencil, Trash2 } from 'lucide-react';
 import { CreateStaffForm } from '../../create-staff/ui/CreateStaffForm';
+import { ApiError } from '@/src/shared/types/api';
 
 function StaffCardSkeleton() {
   return (
@@ -38,6 +51,7 @@ function StaffCardSkeleton() {
 export function StaffList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isPositionOpen, setIsPositionOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data, isLoading, error } = useStaffList();
@@ -53,11 +67,10 @@ export function StaffList() {
   const staffList = data?.content ?? [];
   const totalStaff = data?.totalElements ?? 0;
 
-  // 클라이언트 사이드 검색 필터링
   const filteredStaff = staffList.filter(
     (staff) =>
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.adminPosition?.toLowerCase().includes(searchTerm.toLowerCase())
+      staff.position?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (error) {
@@ -103,6 +116,20 @@ export function StaffList() {
               <CreateStaffForm onSuccess={() => setIsCreateOpen(false)} />
             </DialogContent>
           </Dialog>
+          <Dialog open={isPositionOpen} onOpenChange={setIsPositionOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Briefcase className="w-4 h-4 mr-2" />
+                직책
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>직책 관리</DialogTitle>
+              </DialogHeader>
+              <PositionManager />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -135,5 +162,186 @@ export function StaffList() {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Position Manager (모달 내부) ───
+
+function PositionManager() {
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+
+  const { data: positions, isLoading } = useActivePositions();
+  const { mutate: deletePosition } = useDeletePosition();
+
+  const handleDelete = (id: number) => {
+    if (confirm('정말 삭제하시겠습니까?')) {
+      deletePosition(id);
+      if (editingPosition?.id === id) setEditingPosition(null);
+    }
+  };
+
+  if (editingPosition) {
+    return (
+      <EditPositionForm
+        position={editingPosition}
+        onBack={() => setEditingPosition(null)}
+        onDelete={handleDelete}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <CreatePositionForm />
+
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-medium text-muted-foreground mb-3">등록된 직책</h4>
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : !positions?.length ? (
+          <p className="text-sm text-muted-foreground text-center py-4">등록된 직책이 없습니다.</p>
+        ) : (
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {positions.map((position) => (
+              <div
+                key={position.id}
+                className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium">{position.name}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditingPosition(position)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-red-100"
+                    onClick={() => handleDelete(position.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CreatePositionForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreatePositionInput>({
+    resolver: zodResolver(createPositionSchema),
+    defaultValues: { name: '' },
+  });
+
+  const { mutate: createPosition, isPending, error } = useCreatePosition();
+  const apiError = error as ApiError | null;
+
+  const onSubmit = (data: CreatePositionInput) => {
+    createPosition(data, { onSuccess: () => reset() });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      {apiError && (
+        <div className="p-2 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{apiError.message}</p>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Input
+            placeholder="직책명 (예: 원장, 강사)"
+            {...register('name')}
+          />
+          {errors.name && (
+            <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+          )}
+        </div>
+        <Button type="submit" size="sm" disabled={isPending}>
+          <Plus className="w-4 h-4 mr-1" />
+          {isPending ? '추가 중...' : '추가'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+interface EditPositionFormProps {
+  position: Position;
+  onBack: () => void;
+  onDelete: (id: number) => void;
+}
+
+function EditPositionForm({ position, onBack, onDelete }: EditPositionFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreatePositionInput>({
+    resolver: zodResolver(createPositionSchema),
+    defaultValues: { name: position.name },
+  });
+
+  const { mutate: updatePosition, isPending, error } = useUpdatePosition(position.id);
+  const apiError = error as ApiError | null;
+
+  const onSubmit = (data: CreatePositionInput) => {
+    updatePosition(data, { onSuccess: onBack });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {apiError && (
+        <div className="p-2 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{apiError.message}</p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label>직책명 *</Label>
+        <Input {...register('name')} />
+        {errors.name && (
+          <p className="text-xs text-red-500">{errors.name.message}</p>
+        )}
+      </div>
+
+      <div className="flex justify-between pt-2">
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={onBack}>
+            뒤로
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => { onDelete(position.id); onBack(); }}
+          >
+            삭제
+          </Button>
+        </div>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? '수정 중...' : '수정'}
+        </Button>
+      </div>
+    </form>
   );
 }
