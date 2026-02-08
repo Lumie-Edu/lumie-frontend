@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { academyClient } from '@/src/shared/api/base';
+import { adminClient } from '@/src/shared/api/base';
 import { Staff, CreateStaffInput, UpdateStaffInput } from '../model/schema';
 import { PaginatedResponse, PaginationParams } from '@/src/shared/types/api';
 
@@ -23,7 +23,7 @@ export function useStaffList(params?: StaffQueryParams) {
       if (params?.size !== undefined) searchParams.set('size', String(params.size));
       if (params?.sort) searchParams.set('sort', params.sort);
       const query = searchParams.toString();
-      return academyClient.get<PaginatedResponse<Staff>>(
+      return adminClient.get<PaginatedResponse<Staff>>(
         `/api/v1/admins${query ? `?${query}` : ''}`
       );
     },
@@ -33,7 +33,7 @@ export function useStaffList(params?: StaffQueryParams) {
 export function useStaff(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => academyClient.get<Staff>(`/api/v1/admins/${id}`),
+    queryFn: () => adminClient.get<Staff>(`/api/v1/admins/${id}`),
     enabled: id > 0,
   });
 }
@@ -43,7 +43,7 @@ export function useCreateStaff() {
 
   return useMutation({
     mutationFn: (data: CreateStaffInput) =>
-      academyClient.post<Staff>('/api/v1/admins', data),
+      adminClient.post<Staff>('/api/v1/admins', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 등록되었습니다.');
@@ -56,7 +56,7 @@ export function useUpdateStaff(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateStaffInput) =>
-      academyClient.put<Staff>(`/api/v1/admins/${id}`, data),
+      adminClient.put<Staff>(`/api/v1/admins/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원 정보가 수정되었습니다.');
@@ -68,7 +68,7 @@ export function useDeleteStaff() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => academyClient.delete<void>(`/api/v1/admins/${id}`),
+    mutationFn: (id: number) => adminClient.delete<void>(`/api/v1/admins/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 삭제되었습니다.');
