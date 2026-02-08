@@ -4,6 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --breakpoint-smalltablet: 600px;
+  --breakpoint-tablet: 990px;
+  --breakpoint-desktop: 1200px;
   --font-sans: var(--font-noto-sans-kr), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
