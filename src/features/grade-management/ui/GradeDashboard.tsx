@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { GradeExam, StudentGrade, useExamStatistics, useUpdateGradingType, useUpdateGradeScale, GradingType, GradeScale } from '../api/queries';
+import { StudentGrade, useExamStatistics, useUpdateGradingType, useUpdateGradeScale, GradingType, GradeScale } from '../api/queries';
+import { type Exam } from '@/entities/exam';
 import { GradeStatisticsView } from './GradeStatistics';
 import { StudentGradeTable } from './StudentGradeTable';
 import { ChoiceAnalysisTable } from './ChoiceAnalysisTable';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface GradeDashboardProps {
-    selectedExam: GradeExam | null;
+    selectedExam: Exam | null;
     isCreateMode?: boolean;
     onCreateSuccess?: () => void;
     onCreateCancel?: () => void;
@@ -170,7 +171,11 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
                     <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-                            Exam ID: {selectedExam.id}
+                            {statsData?.examCategory === 'PASS_FAIL'
+                                ? '합격/불합격'
+                                : statsData?.gradingType === 'RELATIVE'
+                                    ? `상대평가 · ${statsData?.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                                    : '절대평가'}
                         </span>
                         <span>•</span>
                         <span>총 {selectedExam.totalQuestions}문항</span>

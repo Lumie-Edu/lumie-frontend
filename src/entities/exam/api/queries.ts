@@ -144,16 +144,29 @@ export function useMyExamResults() {
 }
 
 // Report Generation
+export function buildReportUrl(
+  baseUrl: string,
+  studentId: number,
+  examId: number,
+) {
+  return `${baseUrl}/api/v1/reports/students/${studentId}/exams/${examId}`;
+}
+
+interface GenerateReportParams {
+  studentId: number;
+  examId: number;
+}
+
 export function useGenerateReport() {
   return useMutation({
-    mutationFn: async ({ studentId, examId }: { studentId: number; examId: number }) => {
+    mutationFn: async ({ studentId, examId }: GenerateReportParams) => {
       const { storage } = await import('@/src/shared/lib/storage');
       const { ENV } = await import('@/src/shared/config/env');
 
       const tenantSlug = storage.getTenantSlug();
 
       const response = await fetch(
-        `${ENV.EXAM_SERVICE_URL}/api/v1/reports/students/${studentId}/exams/${examId}`,
+        buildReportUrl(ENV.EXAM_SERVICE_URL, studentId, examId),
         {
           method: 'POST',
           credentials: 'include',

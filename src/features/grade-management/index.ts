@@ -11,10 +11,8 @@ export { StudentDetailPanel } from './ui/StudentDetailPanel';
 
 // Base Queries
 export {
-    useGradeExams,
     useExamStatistics,
     useStudentGrades,
-    type GradeExam,
     type GradeStatistics,
     type StudentGrade,
 } from './api/queries';

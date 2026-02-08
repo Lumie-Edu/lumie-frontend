@@ -2,17 +2,10 @@
 
 import { useState } from 'react';
 import { ReportSidebar, ReportDashboard } from '@/features/report-management';
-
-export interface ReportExam {
-  id: number;
-  name: string;
-  status: string;
-  totalScore: number;
-  createdAt: string;
-}
+import { type Exam } from '@/entities/exam';
 
 export default function ReportManagementPage() {
-  const [selectedExam, setSelectedExam] = useState<ReportExam | null>(null);
+  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden bg-white">

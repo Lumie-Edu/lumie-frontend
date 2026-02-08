@@ -14,10 +14,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useGradeOmr, OmrGradableExam } from '../api/queries';
+import { useGradeOmr } from '../api/queries';
+import { type Exam } from '@/entities/exam';
 
 interface OmrUploadPanelProps {
-    selectedExam: OmrGradableExam | null;
+    selectedExam: Exam | null;
 }
 
 interface UploadedFile {

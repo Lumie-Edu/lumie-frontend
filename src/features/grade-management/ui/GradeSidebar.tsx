@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronRight, BarChart3, Calendar, Loader2, Trash2, MoreVertical, Plus } from 'lucide-react';
+import { Search, ChevronRight, BarChart3, Loader2, Trash2, MoreVertical, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,12 +21,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useGradeExams, useDeleteExam, GradeExam } from '../api/queries';
+import { useExams, useDeleteExam, type Exam } from '@/entities/exam';
 import { ExamAnswersModal } from './ExamAnswersModal';
 
 interface GradeSidebarProps {
     selectedExamId: number | null;
-    onSelectExam: (exam: GradeExam) => void;
+    onSelectExam: (exam: Exam) => void;
     onCreateClick?: () => void;
     isCreateMode?: boolean;
 }
@@ -34,19 +34,12 @@ interface GradeSidebarProps {
 export function GradeSidebar({ selectedExamId, onSelectExam, onCreateClick, isCreateMode }: GradeSidebarProps) {
     const [search, setSearch] = useState('');
     const [deleteExamId, setDeleteExamId] = useState<number | null>(null);
-    const { data, isLoading } = useGradeExams({ page: 0, size: 50 });
+    const { data, isLoading } = useExams({ page: 0, size: 50, sort: 'createdAt,desc' });
     const deleteExamMutation = useDeleteExam();
 
     const exams = data?.content.filter(exam =>
         exam.name.toLowerCase().includes(search.toLowerCase())
     ) ?? [];
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('ko-KR', {
-            month: 'long',
-            day: 'numeric',
-        });
-    };
 
     const handleDelete = async () => {
         if (deleteExamId) {
@@ -125,13 +118,12 @@ export function GradeSidebar({ selectedExamId, onSelectExam, onCreateClick, isCr
                                                 )}>
                                                     {exam.name}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {formatDate(exam.createdAt)}
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span>{exam.totalQuestions || 45}문항</span>
+                                                <div className="text-xs text-gray-500">
+                                                    {exam.category === 'PASS_FAIL'
+                                                        ? '합격/불합격'
+                                                        : exam.gradingType === 'RELATIVE'
+                                                            ? `상대평가 · ${exam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                                                            : '절대평가'}
                                                 </div>
                                             </div>
                                             {isSelected && (

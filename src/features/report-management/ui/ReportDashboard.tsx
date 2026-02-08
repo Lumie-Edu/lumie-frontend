@@ -1,48 +1,23 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { FileText, Download, Users, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useExamResults, useGenerateReport } from '@/entities/exam';
-import { useStudents } from '@/entities/student';
+import { useGenerateReport, type Exam } from '@/entities/exam';
+import { useStudentGrades, type StudentGrade } from '@/features/grade-management';
 import { cn } from '@/lib/utils';
 
-interface ReportExam {
-  id: number;
-  name: string;
-  status: string;
-  totalScore: number;
-  createdAt: string;
-}
-
 interface ReportDashboardProps {
-  selectedExam: ReportExam | null;
+  selectedExam: Exam | null;
 }
 
 export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
-  const { data: resultsData, isLoading: resultsLoading } = useExamResults(selectedExam?.id ?? 0);
-  const { data: studentsData, isLoading: studentsLoading } = useStudents({ size: 1000 });
+  const { data: gradesData, isLoading } = useStudentGrades(selectedExam?.id ?? 0, { size: 1000 });
   const { mutate: generateReport, isPending } = useGenerateReport();
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
 
-  const isLoading = resultsLoading || studentsLoading;
-
-  // Create student name map
-  const studentMap = useMemo(() => {
-    const map = new Map<number, string>();
-    studentsData?.content?.forEach(student => {
-      map.set(student.id, student.name);
-    });
-    return map;
-  }, [studentsData]);
-
-  // Merge results with student names
-  const results = useMemo(() => {
-    return (resultsData ?? []).map(result => ({
-      ...result,
-      studentName: studentMap.get(result.studentId) ?? `학생 ${result.studentId}`,
-    }));
-  }, [resultsData, studentMap]);
+  const results = gradesData?.content ?? [];
+  const isGraded = selectedExam?.category === 'GRADED';
 
   const handleGenerateReport = (studentId: number) => {
     if (!selectedExam) return;
@@ -65,7 +40,6 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
     if (!selectedExam) return;
     for (const result of results) {
       generateReport({ studentId: result.studentId, examId: selectedExam.id });
-      // Add small delay between requests
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   };
@@ -93,20 +67,26 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
           <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
           <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
             <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-              {selectedExam.totalScore || 100}점 만점
+              {selectedExam.category === 'PASS_FAIL'
+                ? '합격/불합격'
+                : selectedExam.gradingType === 'RELATIVE'
+                  ? `상대평가 · ${selectedExam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                  : '절대평가'}
             </span>
             <span>•</span>
             <span>{results.length}명 응시</span>
           </div>
         </div>
-        <Button
-          onClick={handleGenerateAll}
-          disabled={results.length === 0 || isPending}
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" />
-          전체 리포트 다운로드
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleGenerateAll}
+            disabled={results.length === 0 || isPending}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            전체 리포트 다운로드
+          </Button>
+        </div>
       </div>
 
       {/* Content Area */}
@@ -131,28 +111,27 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     점수
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    등급
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    결과
-                  </th>
+                  {isGraded ? (
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      등급
+                    </th>
+                  ) : (
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      결과
+                    </th>
+                  )}
                   <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     리포트
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {results.map((result) => {
+                {results.map((result, index) => {
                   const isGenerating = generatingIds.has(result.studentId);
-                  const maxScore = selectedExam.totalScore || 100;
-                  const score = result.score ?? 0;
-                  const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-                  // Calculate pass/fail based on 60% threshold if isPassed not provided
-                  const isPassed = result.isPassed ?? percentage >= 60;
+                  const maxScore = selectedExam.totalPossibleScore || 100;
 
                   return (
-                    <tr key={result.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={`${result.studentId}-${index}`} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -168,46 +147,41 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">{score}</span>
+                          <span className="font-semibold text-gray-900">{result.score}</span>
                           <span className="text-gray-400">/ {maxScore}</span>
-                          <span className={cn(
-                            'text-xs px-2 py-0.5 rounded-full',
-                            percentage >= 80 ? 'bg-green-100 text-green-700' :
-                            percentage >= 60 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          )}>
-                            {percentage}%
-                          </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        {result.grade != null ? (
-                          <span className={cn(
-                            'inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm',
-                            result.grade <= 2 ? 'bg-indigo-100 text-indigo-700' :
-                            result.grade <= 4 ? 'bg-blue-100 text-blue-700' :
-                            result.grade <= 6 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          )}>
-                            {result.grade}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {isPassed ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">합격</span>
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-red-600">
-                            <XCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">불합격</span>
-                          </span>
-                        )}
-                      </td>
+                      {isGraded ? (
+                        <td className="px-6 py-4">
+                          {result.grade != null ? (
+                            <span className={cn(
+                              'inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm',
+                              result.grade <= 2 ? 'bg-indigo-100 text-indigo-700' :
+                              result.grade <= 4 ? 'bg-blue-100 text-blue-700' :
+                              result.grade <= 6 ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            )}>
+                              {result.grade}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      ) : (
+                        <td className="px-6 py-4">
+                          {result.isPassed ? (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="text-sm font-medium">합격</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-red-600">
+                              <XCircle className="w-4 h-4" />
+                              <span className="text-sm font-medium">불합격</span>
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-right">
                         <Button
                           variant="outline"

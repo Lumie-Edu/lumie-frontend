@@ -31,6 +31,7 @@ export {
   useSubmitExamResult,
   useMyExamResults,
   useGenerateReport,
+  buildReportUrl,
 } from './api/queries';
 
 export { ExamCard } from './ui/ExamCard';

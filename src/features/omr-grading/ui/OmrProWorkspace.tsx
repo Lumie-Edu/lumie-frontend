@@ -17,13 +17,13 @@ import {
 import {
     useGradeOmrBatch,
     MAX_IMAGES,
-    OmrGradableExam,
     BatchOmrResult,
 } from '../api/queries';
+import { type Exam } from '@/entities/exam';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface OmrProWorkspaceProps {
-    selectedExam: OmrGradableExam | null;
+    selectedExam: Exam | null;
 }
 
 interface UploadedFile {
@@ -354,7 +354,11 @@ export function OmrProWorkspace({ selectedExam }: OmrProWorkspaceProps) {
                     <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-                            Exam ID: {selectedExam.id}
+                            {selectedExam.category === 'PASS_FAIL'
+                                ? '합격/불합격'
+                                : selectedExam.gradingType === 'RELATIVE'
+                                    ? `상대평가 · ${selectedExam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                                    : '절대평가'}
                         </span>
                         <span>-</span>
                         <span>총 {selectedExam.totalQuestions}문항</span>

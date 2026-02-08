@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ExamSidebar, OmrProWorkspace, OmrGradableExam } from '@/features/omr-grading';
+import { ExamSidebar, OmrProWorkspace } from '@/features/omr-grading';
+import { type Exam } from '@/entities/exam';
 
 export default function OmrGradingPage() {
-    const [selectedExam, setSelectedExam] = useState<OmrGradableExam | null>(null);
+    const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
 
     // Split View Layout: Full height minus header
     // Assuming the main layout provides a container, we fit within it.

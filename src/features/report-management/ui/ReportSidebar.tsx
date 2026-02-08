@@ -1,22 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronRight, FileText, Calendar, Loader2 } from 'lucide-react';
+import { Search, ChevronRight, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { useExams } from '@/entities/exam';
-
-export interface ReportExam {
-  id: number;
-  name: string;
-  status: string;
-  totalScore: number;
-  createdAt: string;
-}
+import { useExams, type Exam } from '@/entities/exam';
 
 interface ReportSidebarProps {
   selectedExamId: number | null;
-  onSelectExam: (exam: ReportExam) => void;
+  onSelectExam: (exam: Exam) => void;
 }
 
 export function ReportSidebar({ selectedExamId, onSelectExam }: ReportSidebarProps) {
@@ -26,13 +18,6 @@ export function ReportSidebar({ selectedExamId, onSelectExam }: ReportSidebarPro
   const exams = data?.content.filter(exam =>
     exam.name.toLowerCase().includes(search.toLowerCase())
   ) ?? [];
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-gray-200 w-80 flex-shrink-0">
@@ -69,13 +54,7 @@ export function ReportSidebar({ selectedExamId, onSelectExam }: ReportSidebarPro
               return (
                 <button
                   key={exam.id}
-                  onClick={() => onSelectExam({
-                    id: exam.id,
-                    name: exam.name,
-                    status: exam.status ?? 'CLOSED',
-                    totalScore: exam.totalScore ?? 100,
-                    createdAt: exam.createdAt,
-                  })}
+                  onClick={() => onSelectExam(exam)}
                   className={cn(
                     'w-full px-3 py-3 text-left transition-all duration-200 rounded-lg group',
                     'hover:bg-gray-100',
@@ -97,13 +76,12 @@ export function ReportSidebar({ selectedExamId, onSelectExam }: ReportSidebarPro
                       )}>
                         {exam.name}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(exam.createdAt)}
-                        </span>
-                        <span>•</span>
-                        <span>{exam.totalScore}점 만점</span>
+                      <div className="text-xs text-gray-500">
+                        {exam.category === 'PASS_FAIL'
+                          ? '합격/불합격'
+                          : exam.gradingType === 'RELATIVE'
+                            ? `상대평가 · ${exam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                            : '절대평가'}
                       </div>
                     </div>
                     {isSelected && (

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { GradeSidebar, GradeDashboard, GradeExam } from '@/features/grade-management';
+import { GradeSidebar, GradeDashboard } from '@/features/grade-management';
+import { type Exam } from '@/entities/exam';
 
 export default function GradeManagementPage() {
-    const [selectedExam, setSelectedExam] = useState<GradeExam | null>(null);
+    const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
     const [isCreateMode, setIsCreateMode] = useState(false);
 
-    const handleSelectExam = (exam: GradeExam) => {
+    const handleSelectExam = (exam: Exam) => {
         setSelectedExam(exam);
         setIsCreateMode(false);
     };

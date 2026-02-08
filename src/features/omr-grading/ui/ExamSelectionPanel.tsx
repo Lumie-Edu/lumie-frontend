@@ -4,18 +4,18 @@ import { useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, FileText, Calendar, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useGradableExams, OmrGradableExam } from '../api/queries';
+import { useExams, type Exam } from '@/entities/exam';
 
 interface ExamSelectionPanelProps {
-    selectedExam: OmrGradableExam | null;
-    onSelectExam: (exam: OmrGradableExam) => void;
+    selectedExam: Exam | null;
+    onSelectExam: (exam: Exam) => void;
 }
 
 export function ExamSelectionPanel({ selectedExam, onSelectExam }: ExamSelectionPanelProps) {
     const [currentPage, setCurrentPage] = useState(0);
     const pageSize = 5;
 
-    const { data, isLoading } = useGradableExams({ page: currentPage, size: pageSize });
+    const { data, isLoading } = useExams({ page: currentPage, size: pageSize });
 
     const exams = data?.content ?? [];
     const totalPages = data?.totalPages ?? 1;

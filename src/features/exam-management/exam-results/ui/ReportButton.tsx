@@ -1,6 +1,6 @@
 'use client';
 
-import { useGenerateReport } from '@/entities/exam';
+import { useGenerateReport, buildReportUrl } from '@/entities/exam';
 import { Button } from '@/src/shared/ui/Button';
 import { FileText, Download, Eye } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -33,7 +33,7 @@ export function ReportButton({
 
     try {
       const response = await fetch(
-        `${ENV.EXAM_SERVICE_URL}/api/v1/reports/students/${studentId}/exams/${examId}`,
+        buildReportUrl(ENV.EXAM_SERVICE_URL, studentId, examId),
         {
           method: 'POST',
           credentials: 'include',

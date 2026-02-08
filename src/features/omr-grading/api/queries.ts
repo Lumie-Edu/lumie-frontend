@@ -1,18 +1,12 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { examClient } from '@/src/shared/api/base';
 import { ENV } from '@/src/shared/config/env';
-import { PaginatedResponse } from '@/src/shared/types/api';
-import { Exam } from '@/entities/exam';
 import { storage } from '@/src/shared/lib/storage';
 
 const MAX_IMAGES = 200;
-
-interface OmrGradableExam extends Exam {
-    // Exam fields are sufficient - grading-svc fetches details
-}
 
 interface OmrGradingResult {
     examId: number;
@@ -70,24 +64,7 @@ interface OmrBatchResponse {
 
 const QUERY_KEYS = {
     all: ['omr-grading'] as const,
-    gradableExams: (params?: { page?: number; size?: number }) =>
-        [...QUERY_KEYS.all, 'gradable-exams', params] as const,
 };
-
-export function useGradableExams(params?: { page?: number; size?: number }) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gradableExams(params),
-        queryFn: async () => {
-            const searchParams = new URLSearchParams();
-            if (params?.page !== undefined) searchParams.set('page', String(params.page));
-            if (params?.size !== undefined) searchParams.set('size', String(params.size));
-            const query = searchParams.toString();
-            return examClient.get<PaginatedResponse<OmrGradableExam>>(
-                `/api/v1/exams${query ? `?${query}` : ''}`
-            );
-        },
-    });
-}
 
 /**
  * 배치 OMR 채점 + DB 저장 (exam-svc 경유)
@@ -158,7 +135,6 @@ export const useGradeOmr = useGradeOmrBatch;
 export { MAX_IMAGES };
 
 export type {
-    OmrGradableExam,
     OmrGradingResult,
     OmrQuestionResult,
     OmrGradingRequest,
