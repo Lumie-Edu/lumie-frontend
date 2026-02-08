@@ -58,6 +58,7 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
       password: generateRandomString(),
       name: '',
       phone: '',
+      parentPhone: '',
       studentHighschool: '',
       studentMemo: '',
     },
@@ -71,6 +72,7 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
           password: generateRandomString(),
           name: '',
           phone: '',
+          parentPhone: '',
           studentHighschool: '',
           studentMemo: '',
         });
@@ -157,6 +159,16 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
               type="tel"
               placeholder="01012345678"
               {...register('phone')}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="parentPhone">학부모</Label>
+            <Input
+              id="parentPhone"
+              type="tel"
+              placeholder="01012345678"
+              {...register('parentPhone')}
             />
           </div>
 

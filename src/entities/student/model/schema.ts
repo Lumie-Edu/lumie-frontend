@@ -14,6 +14,7 @@ export const studentSchema = z.object({
   academyName: z.string(),
   studentHighschool: z.string().nullable().optional(),
   studentBirthYear: z.number().nullable().optional(),
+  parentPhone: phoneSchemaApi,
   studentMemo: z.string().nullable().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
@@ -37,6 +38,7 @@ export const createStudentSchema = z.object({
   academyId: z.number({ message: '학원을 선택해주세요.' }),
   studentHighschool: z.string().optional(),
   studentBirthYear: z.number().optional(),
+  parentPhone: phoneSchema,
   studentMemo: z.string().optional(),
 });
 
@@ -47,6 +49,7 @@ export const updateStudentSchema = z.object({
   phone: phoneSchema,
   studentHighschool: z.string().optional(),
   studentBirthYear: z.number().optional(),
+  parentPhone: phoneSchema,
   studentMemo: z.string().optional(),
   academyId: z.number().optional(),
 });

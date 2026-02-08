@@ -14,6 +14,7 @@ interface ParsedStudent {
   password: string;
   name: string;
   phone?: string;
+  parentPhone?: string;
   studentHighschool?: string;
   studentBirthYear?: number;
 }
@@ -42,6 +43,7 @@ export function BulkImportForm() {
         const loginIdIdx = headers.findIndex((h) => h.includes('아이디') || h.includes('loginid') || h.includes('id'));
         const passwordIdx = headers.findIndex((h) => h.includes('비밀번호') || h.includes('password'));
         const phoneIdx = headers.findIndex((h) => h.includes('연락처') || h.includes('phone'));
+        const parentPhoneIdx = headers.findIndex((h) => h.includes('학부모') || h.includes('parent'));
         const schoolIdx = headers.findIndex((h) => h.includes('학교') || h.includes('school'));
         const birthYearIdx = headers.findIndex((h) => h.includes('출생') || h.includes('birth'));
 
@@ -59,6 +61,7 @@ export function BulkImportForm() {
               userLoginId: values[loginIdIdx],
               password: values[passwordIdx],
               phone: phoneIdx >= 0 ? values[phoneIdx] : undefined,
+              parentPhone: parentPhoneIdx >= 0 ? values[parentPhoneIdx] : undefined,
               studentHighschool: schoolIdx >= 0 ? values[schoolIdx] : undefined,
               studentBirthYear: birthYearIdx >= 0 ? parseInt(values[birthYearIdx]) || undefined : undefined,
             });
@@ -158,6 +161,7 @@ export function BulkImportForm() {
                   <th className="px-4 py-2 text-left">이름</th>
                   <th className="px-4 py-2 text-left">아이디</th>
                   <th className="px-4 py-2 text-left">연락처</th>
+                  <th className="px-4 py-2 text-left">학부모</th>
                   <th className="px-4 py-2 text-left">학교</th>
                   <th className="px-4 py-2 w-12"></th>
                 </tr>
@@ -168,6 +172,7 @@ export function BulkImportForm() {
                     <td className="px-4 py-2">{student.name}</td>
                     <td className="px-4 py-2">{student.userLoginId}</td>
                     <td className="px-4 py-2">{student.phone ? formatPhoneNumber(student.phone) : '-'}</td>
+                    <td className="px-4 py-2">{student.parentPhone ? formatPhoneNumber(student.parentPhone) : '-'}</td>
                     <td className="px-4 py-2">{student.studentHighschool || '-'}</td>
                     <td className="px-4 py-2">
                       <button

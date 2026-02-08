@@ -54,6 +54,7 @@ export function EditStudentModal({ student, academies, open, onOpenChange }: Edi
       reset({
         name: student.name,
         phone: student.phone ?? '',
+        parentPhone: student.parentPhone ?? '',
         studentHighschool: student.studentHighschool ?? '',
         studentBirthYear: student.studentBirthYear ?? undefined,
         studentMemo: student.studentMemo ?? '',
@@ -123,6 +124,16 @@ export function EditStudentModal({ student, academies, open, onOpenChange }: Edi
               type="tel"
               placeholder="01012345678"
               {...register('phone')}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="parentPhone">학부모</Label>
+            <Input
+              id="parentPhone"
+              type="tel"
+              placeholder="01012345678"
+              {...register('parentPhone')}
             />
           </div>
 
