@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import {
     Upload, Image as ImageIcon, X, Loader2, Sparkles,
-    FileCheck, ShieldAlert, CheckCircle2, XCircle, Phone, RotateCcw
+    FileCheck, ShieldAlert, CheckCircle2, XCircle, Phone, RotateCcw, ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface OmrProWorkspaceProps {
     selectedExam: Exam | null;
+    onBack?: () => void;
 }
 
 interface UploadedFile {
@@ -108,7 +109,7 @@ function ResultCard({ result, index }: { result: BatchOmrResult; index: number }
     );
 }
 
-export function OmrProWorkspace({ selectedExam }: OmrProWorkspaceProps) {
+export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) {
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [gradingResults, setGradingResults] = useState<BatchOmrResult[] | null>(null);
@@ -254,13 +255,20 @@ export function OmrProWorkspace({ selectedExam }: OmrProWorkspaceProps) {
 
         return (
             <div className="flex-1 flex flex-col h-full bg-gray-50/50">
-                <div className="px-8 py-5 bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">채점 결과</h2>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {selectedExam.name} - 총 {gradingResults.length}명
-                            </p>
+                        <div className="flex items-center gap-3">
+                            {onBack && (
+                                <Button variant="ghost" size="sm" onClick={onBack} className="tablet:hidden -ml-1 p-1.5">
+                                    <ArrowLeft className="w-5 h-5" />
+                                </Button>
+                            )}
+                            <div>
+                                <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">채점 결과</h2>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {selectedExam.name} - 총 {gradingResults.length}명
+                                </p>
+                            </div>
                         </div>
                         <Button onClick={handleReset} variant="outline" className="gap-2">
                             <RotateCcw className="w-4 h-4" />
@@ -349,9 +357,15 @@ export function OmrProWorkspace({ selectedExam }: OmrProWorkspaceProps) {
         </Dialog>
 
         <div className="flex-1 flex flex-col h-full bg-gray-50/50">
-            <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
+            <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                    {onBack && (
+                        <Button variant="ghost" size="sm" onClick={onBack} className="tablet:hidden -ml-1 p-1.5">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                    )}
+                    <div>
+                    <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
                             {selectedExam.category === 'PASS_FAIL'
@@ -364,6 +378,7 @@ export function OmrProWorkspace({ selectedExam }: OmrProWorkspaceProps) {
                         <span>총 {selectedExam.totalQuestions}문항</span>
                         <span>-</span>
                         <span className="text-amber-600">최대 {MAX_IMAGES}장</span>
+                    </div>
                     </div>
                 </div>
 

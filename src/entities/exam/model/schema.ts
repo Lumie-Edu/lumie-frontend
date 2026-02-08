@@ -48,6 +48,21 @@ export type CreateExamInput = z.infer<typeof createExamSchema>;
 export const updateExamSchema = createExamSchema.partial();
 export type UpdateExamInput = z.infer<typeof updateExamSchema>;
 
+export const examTemplateSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  category: z.enum(['GRADED', 'PASS_FAIL']),
+  totalQuestions: z.number(),
+  totalPossibleScore: z.number(),
+  questionScores: z.record(z.string(), z.number()),
+  questionTypes: z.record(z.string(), z.string()).nullable().optional(),
+  passScore: z.number().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+
+export type ExamTemplate = z.infer<typeof examTemplateSchema>;
+
 export const examResultSchema = z.object({
   id: z.number(),
   examId: z.number(),

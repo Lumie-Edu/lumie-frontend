@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, Users, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Download, Users, Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGenerateReport, type Exam } from '@/entities/exam';
 import { useStudentGrades, type StudentGrade } from '@/features/grade-management';
@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 
 interface ReportDashboardProps {
   selectedExam: Exam | null;
+  onBack?: () => void;
 }
 
-export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
+export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) {
   const { data: gradesData, isLoading } = useStudentGrades(selectedExam?.id ?? 0, { size: 1000 });
   const { mutate: generateReport, isPending } = useGenerateReport();
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
@@ -62,9 +63,20 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50/50 overflow-hidden">
       {/* Dashboard Header */}
-      <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
+      <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="tablet:hidden -ml-1 p-1.5"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <div>
+          <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
           <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
             <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
               {selectedExam.category === 'PASS_FAIL'
@@ -75,6 +87,7 @@ export function ReportDashboard({ selectedExam }: ReportDashboardProps) {
             </span>
             <span>•</span>
             <span>{results.length}명 응시</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { examClient } from '@/src/shared/api/base';
 import { PaginatedResponse } from '@/src/shared/types/api';
-import { Exam, CreateExamInput } from '@/entities/exam';
+import { Exam, CreateExamInput, ExamTemplate } from '@/entities/exam';
 import { toast } from 'sonner';
 
 // Interfaces
@@ -99,6 +99,7 @@ const QUERY_KEYS = {
     examStats: (examId: number) => [...QUERY_KEYS.all, 'stats', examId] as const,
     studentGrades: (examId: number, params?: Record<string, unknown>) => [...QUERY_KEYS.all, 'grades', examId, params] as const,
     academyComparison: (examId: number) => [...QUERY_KEYS.all, 'academy-comparison', examId] as const,
+    templates: ['exam-templates'] as const,
 };
 
 // Hooks
@@ -242,5 +243,52 @@ export function useAcademyComparison(examId: number) {
             );
         },
         enabled: examId > 0,
+    });
+}
+
+// Exam Template Hooks
+
+export function useExamTemplates() {
+    return useQuery({
+        queryKey: QUERY_KEYS.templates,
+        queryFn: async () => {
+            return examClient.get<PaginatedResponse<ExamTemplate>>(
+                '/api/v1/exam-templates?sort=createdAt,desc&size=100'
+            );
+        },
+    });
+}
+
+export function useCreateExamTemplate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: Omit<ExamTemplate, 'id' | 'totalPossibleScore' | 'createdAt' | 'updatedAt'>) => {
+            return examClient.post<ExamTemplate>('/api/v1/exam-templates', data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.templates });
+            toast.success('템플릿이 저장되었습니다.');
+        },
+        onError: () => {
+            toast.error('템플릿 저장에 실패했습니다.');
+        },
+    });
+}
+
+export function useDeleteExamTemplate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (templateId: number) => {
+            return examClient.delete(`/api/v1/exam-templates/${templateId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.templates });
+            toast.success('템플릿이 삭제되었습니다.');
+        },
+        onError: () => {
+            toast.error('템플릿 삭제에 실패했습니다.');
+        },
     });
 }

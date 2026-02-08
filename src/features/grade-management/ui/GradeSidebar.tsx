@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, ChevronRight, BarChart3, Loader2, Trash2, MoreVertical, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -49,7 +50,7 @@ export function GradeSidebar({ selectedExamId, onSelectExam, onCreateClick, isCr
     };
 
     return (
-        <div className="flex flex-col h-full bg-white border-r border-gray-200 w-80 flex-shrink-0">
+        <div className="flex flex-col h-full bg-white border-r border-gray-200 w-full tablet:w-80 flex-shrink-0">
             {/* Header */}
             <div className="p-4 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center justify-between mb-4 px-1">
@@ -57,10 +58,7 @@ export function GradeSidebar({ selectedExamId, onSelectExam, onCreateClick, isCr
                     <Button
                         size="sm"
                         onClick={onCreateClick}
-                        className={cn(
-                            "gap-1.5",
-                            isCreateMode && "bg-indigo-700"
-                        )}
+                        className="gap-1.5"
                     >
                         <Plus className="w-4 h-4" />
                         시험 추가
@@ -80,8 +78,18 @@ export function GradeSidebar({ selectedExamId, onSelectExam, onCreateClick, isCr
             {/* List */}
             <div className="flex-1 overflow-y-auto">
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-40">
-                        <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                    <div className="p-2 space-y-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="px-3 py-3 rounded-lg">
+                                <div className="flex items-start gap-3">
+                                    <Skeleton className="w-7 h-7 rounded-md flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                        <Skeleton className="h-4 w-3/4 mb-2" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : exams.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-gray-400 px-6 text-center">

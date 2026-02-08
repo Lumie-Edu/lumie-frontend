@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronRight, FileText, Loader2 } from 'lucide-react';
+import { Search, ChevronRight, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useExams, type Exam } from '@/entities/exam';
 
 interface ExamSidebarProps {
@@ -20,7 +21,7 @@ export function ExamSidebar({ selectedExam, onSelectExam }: ExamSidebarProps) {
     ) ?? [];
 
     return (
-        <div className="flex flex-col h-full bg-white border-r border-gray-200 w-80 flex-shrink-0">
+        <div className="flex flex-col h-full bg-white border-r border-gray-200 w-full tablet:w-80 flex-shrink-0">
             {/* Sidebar Header & Search */}
             <div className="p-4 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
                 <h2 className="text-3xl font-bold text-gray-900 mb-6 px-1">시험 목록</h2>
@@ -38,8 +39,18 @@ export function ExamSidebar({ selectedExam, onSelectExam }: ExamSidebarProps) {
             {/* Exam List */}
             <div className="flex-1 overflow-y-auto">
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-40">
-                        <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                    <div className="p-2 space-y-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="px-3 py-3 rounded-lg">
+                                <div className="flex items-start gap-3">
+                                    <Skeleton className="w-7 h-7 rounded-md flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                        <Skeleton className="h-4 w-3/4 mb-2" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : exams.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-gray-400 px-6 text-center">

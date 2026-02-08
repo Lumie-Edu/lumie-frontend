@@ -8,6 +8,7 @@ export {
   type UpdateExamInput,
   type ExamResult,
   type SubmitExamResultInput,
+  type ExamTemplate,
   examSchema,
   examStatusSchema,
   examCategorySchema,
@@ -17,6 +18,7 @@ export {
   updateExamSchema,
   examResultSchema,
   submitExamResultSchema,
+  examTemplateSchema,
 } from './model/schema';
 
 export {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, Loader2, FileText, CheckCircle } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { RotateCcw, Loader2, FileText, CheckCircle, ChevronDown, ChevronUp, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,8 +13,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { useCreateExamWithDetails } from '../api/queries';
-import type { ExamCategory } from '@/entities/exam';
+import { useCreateExamWithDetails, useExamTemplates, useCreateExamTemplate, useDeleteExamTemplate } from '../api/queries';
+import type { ExamCategory, ExamTemplate } from '@/entities/exam';
 
 interface ExamCreateFormProps {
     onSuccess?: () => void;
@@ -62,49 +62,56 @@ const GRADED_TYPE_MAP: Record<number, string> = {
     40: '내용파악', 41: '내용파악', 42: '내용파악', 43: '내용파악', 44: '내용파악', 45: '내용파악',
 };
 
+function buildDefaultValues(totalQuestions: number, category: ExamCategory) {
+    const correctAnswers: Record<string, string> = {};
+    const questionScores: Record<string, number> = {};
+    const questionTypes: Record<string, string> = {};
+
+    for (let i = 1; i <= totalQuestions; i++) {
+        correctAnswers[String(i)] = '1';
+        questionScores[String(i)] = category === 'PASS_FAIL' ? 1 : 2;
+        questionTypes[String(i)] = category === 'PASS_FAIL'
+            ? '단어'
+            : (GRADED_TYPE_MAP[i] || '기타');
+    }
+
+    return { correctAnswers, questionScores, questionTypes };
+}
+
 export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
-    const [formData, setFormData] = useState<FormData>({
-        name: '',
-        category: 'GRADED',
-        totalQuestions: 45,
-        correctAnswers: {},
-        questionScores: {},
-        questionTypes: {},
-        passScore: 16,
+    const [formData, setFormData] = useState<FormData>(() => {
+        const defaults = buildDefaultValues(45, 'GRADED');
+        return {
+            name: '',
+            category: 'GRADED',
+            totalQuestions: 45,
+            ...defaults,
+            passScore: 16,
+        };
     });
+    const [templateCardOpen, setTemplateCardOpen] = useState(true);
 
     const createExamMutation = useCreateExamWithDetails();
+    const { data: templatesData } = useExamTemplates();
+    const createTemplateMutation = useCreateExamTemplate();
+    const deleteTemplateMutation = useDeleteExamTemplate();
+
+    const templates = templatesData?.content ?? [];
 
     const setDefaultValues = useCallback((totalQuestions: number, category: ExamCategory) => {
-        const correctAnswers: Record<string, string> = {};
-        const questionScores: Record<string, number> = {};
-        const questionTypes: Record<string, string> = {};
-
-        for (let i = 1; i <= totalQuestions; i++) {
-            correctAnswers[String(i)] = '1';
-            questionScores[String(i)] = category === 'PASS_FAIL' ? 1 : 2;
-            questionTypes[String(i)] = category === 'PASS_FAIL'
-                ? '단어'
-                : (GRADED_TYPE_MAP[i] || '기타');
-        }
-
+        const defaults = buildDefaultValues(totalQuestions, category);
         setFormData(prev => ({
             ...prev,
-            correctAnswers,
-            questionScores,
-            questionTypes,
+            ...defaults,
         }));
     }, []);
-
-    useEffect(() => {
-        setDefaultValues(formData.totalQuestions, formData.category);
-    }, [formData.totalQuestions, formData.category, setDefaultValues]);
 
     const handleCategoryChange = (value: ExamCategory) => {
         setFormData(prev => ({
             ...prev,
             category: value,
         }));
+        setDefaultValues(formData.totalQuestions, value);
     };
 
     const handleTotalQuestionsChange = (value: number) => {
@@ -113,6 +120,7 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
             ...prev,
             totalQuestions: clampedValue,
         }));
+        setDefaultValues(clampedValue, formData.category);
     };
 
     const handleAnswerChange = (questionNum: string, value: string) => {
@@ -138,6 +146,44 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
 
     const handleReset = () => {
         setDefaultValues(formData.totalQuestions, formData.category);
+    };
+
+    const handleApplyTemplate = (template: ExamTemplate) => {
+        const correctAnswers: Record<string, string> = {};
+        for (let i = 1; i <= template.totalQuestions; i++) {
+            correctAnswers[String(i)] = '1';
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            name: '',
+            category: template.category,
+            totalQuestions: template.totalQuestions,
+            correctAnswers,
+            questionScores: { ...template.questionScores },
+            questionTypes: template.questionTypes ? { ...template.questionTypes } : {},
+            passScore: template.passScore ?? prev.passScore,
+        }));
+    };
+
+    const handleSaveAsTemplate = async () => {
+        const templateName = prompt('템플릿 이름을 입력하세요:');
+        if (!templateName?.trim()) return;
+
+        await createTemplateMutation.mutateAsync({
+            name: templateName.trim(),
+            category: formData.category,
+            totalQuestions: formData.totalQuestions,
+            questionScores: formData.questionScores,
+            questionTypes: formData.questionTypes,
+            passScore: formData.category === 'PASS_FAIL' ? formData.passScore : undefined,
+        });
+    };
+
+    const handleDeleteTemplate = async (e: React.MouseEvent, templateId: number) => {
+        e.stopPropagation();
+        if (!confirm('이 템플릿을 삭제하시겠습니까?')) return;
+        await deleteTemplateMutation.mutateAsync(templateId);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -171,44 +217,48 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
         for (let i = 1; i <= formData.totalQuestions; i++) {
             const qNum = String(i);
             inputs.push(
-                <div key={i} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
-                    <div className="w-8 h-8 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-full text-sm font-bold flex-shrink-0">
+                <div key={i} className="flex items-center gap-1.5 p-2 bg-white rounded-lg border border-gray-100">
+                    <div className="w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-700 rounded-full text-xs font-bold shrink-0">
                         {i}
                     </div>
-                    <Select
-                        value={formData.correctAnswers[qNum] || '1'}
-                        onValueChange={(v) => handleAnswerChange(qNum, v)}
-                    >
-                        <SelectTrigger className="w-16 h-8 text-xs">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[1, 2, 3, 4, 5].map((n) => (
-                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="shrink-0">
+                        <Select
+                            value={formData.correctAnswers[qNum] || '1'}
+                            onValueChange={(v) => handleAnswerChange(qNum, v)}
+                        >
+                            <SelectTrigger className="w-14 h-8 text-xs">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <Input
                         type="number"
                         min={1}
                         max={10}
                         value={formData.questionScores[qNum] || 2}
                         onChange={(e) => handleScoreChange(qNum, parseInt(e.target.value) || 1)}
-                        className="w-14 h-8 text-xs text-center"
+                        className="w-12 h-8 text-xs text-center shrink-0"
                     />
-                    <Select
-                        value={formData.questionTypes[qNum] || '기타'}
-                        onValueChange={(v) => handleTypeChange(qNum, v)}
-                    >
-                        <SelectTrigger className="flex-1 h-8 text-xs">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {QUESTION_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex-1 min-w-0">
+                        <Select
+                            value={formData.questionTypes[qNum] || '기타'}
+                            onValueChange={(v) => handleTypeChange(qNum, v)}
+                        >
+                            <SelectTrigger className="w-full h-8 text-xs [&>span]:truncate">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {QUESTION_TYPES.map((type) => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             );
         }
@@ -218,7 +268,7 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
     return (
         <div className="flex-1 flex flex-col h-full bg-gray-50/50 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 shrink-0">
+            <div className="flex items-center justify-between px-4 tablet:px-6 desktop:px-8 py-4 desktop:py-5 bg-white border-b border-gray-200 shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">시험 추가</h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -232,95 +282,202 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
                 )}
             </div>
 
-            {/* Form Content */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
-                <div className="max-w-4xl mx-auto space-y-6">
-                    {/* Basic Info Card */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-500" />
-                            기본 정보
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="md:col-span-2">
-                                <Label htmlFor="examName" className="text-sm font-medium">시험명</Label>
-                                <Input
-                                    id="examName"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="예: 블루밍 모의고사 8회"
-                                    className="mt-1.5"
-                                />
-                            </div>
+            {/* Form Content — 2-column on desktop */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto desktop:overflow-hidden p-4 tablet:p-6 desktop:p-8">
+                <div className="flex flex-col desktop:flex-row desktop:h-full gap-4 desktop:gap-6">
 
-                            <div>
-                                <Label className="text-sm font-medium">시험 유형</Label>
-                                <Select
-                                    value={formData.category}
-                                    onValueChange={(v) => handleCategoryChange(v as ExamCategory)}
-                                >
-                                    <SelectTrigger className="mt-1.5">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="GRADED">등급제</SelectItem>
-                                        <SelectItem value="PASS_FAIL">P/NP</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                    {/* Left Column — settings */}
+                    <div className="w-full desktop:w-[340px] shrink-0 space-y-4 desktop:overflow-y-auto">
+                        {/* Template */}
+                        <div className="bg-white rounded-xl border border-gray-200">
+                            <button
+                                type="button"
+                                className="w-full flex items-center justify-between px-5 py-4 text-left"
+                                onClick={() => setTemplateCardOpen(prev => !prev)}
+                            >
+                                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <Save className="w-4 h-4 text-gray-400" />
+                                    템플릿
+                                    {templates.length > 0 && (
+                                        <span className="text-xs font-normal text-gray-500">
+                                            ({templates.length})
+                                        </span>
+                                    )}
+                                </h3>
+                                {templateCardOpen ? (
+                                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                )}
+                            </button>
 
-                            <div>
-                                <Label className="text-sm font-medium">문항 수</Label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    max={MAX_QUESTIONS}
-                                    value={formData.totalQuestions}
-                                    onChange={(e) => handleTotalQuestionsChange(parseInt(e.target.value) || 1)}
-                                    className="mt-1.5"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">최대 {MAX_QUESTIONS}문항</p>
-                            </div>
-
-                            {formData.category === 'PASS_FAIL' && (
-                                <div>
-                                    <Label className="text-sm font-medium">합격 기준 점수</Label>
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        max={formData.totalQuestions}
-                                        value={formData.passScore}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, passScore: parseInt(e.target.value) || 1 }))}
-                                        className="mt-1.5"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">{formData.totalQuestions}점 만점 중 {formData.passScore}점 이상 합격</p>
+                            {templateCardOpen && (
+                                <div className="px-5 pb-4 -mt-1">
+                                    {templates.length === 0 ? (
+                                        <p className="text-xs text-gray-500 py-2">
+                                            저장된 템플릿이 없습니다.
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {templates.map((template) => (
+                                                <div
+                                                    key={template.id}
+                                                    className="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
+                                                    onClick={() => handleApplyTemplate(template)}
+                                                >
+                                                    <span className="text-xs font-medium text-gray-900">
+                                                        {template.name}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500">
+                                                        {template.category === 'GRADED' ? '등급제' : 'P/NP'} · {template.totalQuestions}문항
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="p-0.5 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+                                                        onClick={(e) => handleDeleteTemplate(e, template.id)}
+                                                        disabled={deleteTemplateMutation.isPending}
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Summary */}
-                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg flex items-center justify-between">
-                            <span className="text-sm text-indigo-700">
-                                총 <span className="font-bold">{formData.totalQuestions}</span>문항 /
-                                총점 <span className="font-bold">{totalScore}</span>점
-                            </span>
-                            {formData.category === 'GRADED' && (
-                                <span className="text-xs text-indigo-600">
-                                    * 평가 방식(절대/상대)은 채점 후 결과 화면에서 변경할 수 있습니다
+                        {/* Basic Info */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-5">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-gray-400" />
+                                기본 정보
+                            </h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="examName" className="text-xs font-medium">시험명</Label>
+                                    <Input
+                                        id="examName"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="예: 블루밍 모의고사 8회"
+                                        className="mt-1 h-9"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label className="text-xs font-medium">시험 유형</Label>
+                                        <Select
+                                            value={formData.category}
+                                            onValueChange={(v) => handleCategoryChange(v as ExamCategory)}
+                                        >
+                                            <SelectTrigger className="mt-1 h-9">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="GRADED">등급제</SelectItem>
+                                                <SelectItem value="PASS_FAIL">P/NP</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-xs font-medium">문항 수</Label>
+                                        <Input
+                                            type="number"
+                                            min={1}
+                                            max={MAX_QUESTIONS}
+                                            value={formData.totalQuestions}
+                                            onChange={(e) => handleTotalQuestionsChange(parseInt(e.target.value) || 1)}
+                                            className="mt-1 h-9"
+                                        />
+                                    </div>
+                                </div>
+
+                                {formData.category === 'PASS_FAIL' && (
+                                    <div>
+                                        <Label className="text-xs font-medium">합격 기준 점수</Label>
+                                        <Input
+                                            type="number"
+                                            min={1}
+                                            max={formData.totalQuestions}
+                                            value={formData.passScore}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, passScore: parseInt(e.target.value) || 1 }))}
+                                            className="mt-1 h-9"
+                                        />
+                                        <p className="text-[10px] text-gray-500 mt-1">{formData.totalQuestions}점 만점 중 {formData.passScore}점 이상</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Summary */}
+                            <div className="mt-4 p-2.5 bg-gray-50 rounded-lg">
+                                <span className="text-xs text-gray-700">
+                                    총 <span className="font-bold">{formData.totalQuestions}</span>문항 /
+                                    총점 <span className="font-bold">{totalScore}</span>점
                                 </span>
-                            )}
+                                {formData.category === 'GRADED' && (
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        * 평가 방식은 채점 후 변경 가능
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                type="submit"
+                                disabled={createExamMutation.isPending || !formData.name.trim()}
+                                className={cn(
+                                    "w-full gap-2",
+                                    createExamMutation.isPending && "opacity-70"
+                                )}
+                            >
+                                {createExamMutation.isPending ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        생성 중...
+                                    </>
+                                ) : (
+                                    '시험 생성'
+                                )}
+                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleSaveAsTemplate}
+                                    disabled={createTemplateMutation.isPending}
+                                    className="flex-1 gap-1.5 text-xs"
+                                >
+                                    {createTemplateMutation.isPending ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Save className="w-3.5 h-3.5" />
+                                    )}
+                                    템플릿으로 저장
+                                </Button>
+                                {onCancel && (
+                                    <Button type="button" variant="outline" size="sm" onClick={onCancel} className="flex-1 text-xs">
+                                        취소
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Question Settings Card */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-4">
+                    {/* Right Column — question grid */}
+                    <div className="flex-1 min-w-0 min-h-0 bg-white rounded-xl border border-gray-200 p-4 desktop:p-5 flex flex-col">
+                        <div className="flex items-center justify-between mb-3 shrink-0">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-indigo-500" />
+                                    <CheckCircle className="w-4 h-4 text-gray-400" />
                                     문제별 정답 및 배점
                                 </h3>
-                                <p className="text-sm text-gray-500 mt-0.5">
+                                <p className="text-xs text-gray-500 mt-0.5">
                                     정답(1~5) / 배점(1~10점) / 유형
                                 </p>
                             </div>
@@ -329,43 +486,18 @@ export function ExamCreateForm({ onSuccess, onCancel }: ExamCreateFormProps) {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleReset}
-                                className="gap-1.5"
+                                className="gap-1.5 text-xs"
                             >
                                 <RotateCcw className="w-3.5 h-3.5" />
-                                기본값으로 재설정
+                                재설정
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto p-1">
+                        <div className="grid gap-2 flex-1 overflow-y-auto p-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
                             {renderQuestionInputs()}
                         </div>
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end gap-3">
-                        {onCancel && (
-                            <Button type="button" variant="outline" onClick={onCancel}>
-                                취소
-                            </Button>
-                        )}
-                        <Button
-                            type="submit"
-                            disabled={createExamMutation.isPending || !formData.name.trim()}
-                            className={cn(
-                                "gap-2 px-8",
-                                createExamMutation.isPending && "opacity-70"
-                            )}
-                        >
-                            {createExamMutation.isPending ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    생성 중...
-                                </>
-                            ) : (
-                                '시험 생성'
-                            )}
-                        </Button>
-                    </div>
                 </div>
             </form>
         </div>

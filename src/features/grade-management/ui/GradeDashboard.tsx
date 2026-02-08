@@ -8,7 +8,7 @@ import { StudentGradeTable } from './StudentGradeTable';
 import { ChoiceAnalysisTable } from './ChoiceAnalysisTable';
 import { StudentDetailPanel } from './StudentDetailPanel';
 import { ExamCreateForm } from './ExamCreateForm';
-import { BarChart3, Users, PieChart, Loader2 } from 'lucide-react';
+import { BarChart3, Users, PieChart, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,7 @@ interface GradeDashboardProps {
     isCreateMode?: boolean;
     onCreateSuccess?: () => void;
     onCreateCancel?: () => void;
+    onBack?: () => void;
 }
 
 type TabType = 'overview' | 'students' | 'analysis';
@@ -125,7 +126,7 @@ function GradeScaleToggle({
     );
 }
 
-export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, onCreateCancel }: GradeDashboardProps) {
+export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, onCreateCancel, onBack }: GradeDashboardProps) {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [selectedStudent, setSelectedStudent] = useState<StudentGrade | null>(null);
 
@@ -166,19 +167,31 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
     return (
         <div className="flex-1 flex flex-col h-full bg-gray-50/50 overflow-hidden">
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                        <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-                            {statsData?.examCategory === 'PASS_FAIL'
-                                ? '합격/불합격'
-                                : statsData?.gradingType === 'RELATIVE'
-                                    ? `상대평가 · ${statsData?.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
-                                    : '절대평가'}
-                        </span>
-                        <span>•</span>
-                        <span>총 {selectedExam.totalQuestions}문항</span>
+            <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
+                <div className="flex items-center gap-3">
+                    {onBack && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onBack}
+                            className="tablet:hidden -ml-1 p-1.5"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                    )}
+                    <div>
+                        <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                            <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
+                                {statsData?.examCategory === 'PASS_FAIL'
+                                    ? '합격/불합격'
+                                    : statsData?.gradingType === 'RELATIVE'
+                                        ? `상대평가 · ${statsData?.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                                        : '절대평가'}
+                            </span>
+                            <span>•</span>
+                            <span>총 {selectedExam.totalQuestions}문항</span>
+                        </div>
                     </div>
                 </div>
             </div>
