@@ -34,3 +34,57 @@ export function formatPhoneNumber(phone: string | null | undefined): string {
   // 그 외의 경우 원본 반환
   return phone;
 }
+
+/**
+ * 날짜를 YYYY.MM.DD 형식으로 포맷팅합니다.
+ */
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
+/**
+ * 금액을 원화 형식으로 포맷팅합니다. (예: 3,500,000원)
+ */
+export function formatCurrency(amount: number | null | undefined): string {
+  if (amount == null) return '';
+  return `${amount.toLocaleString('ko-KR')}원`;
+}
+
+/**
+ * 입사일 기준 근속 기간을 계산합니다. (예: 2년 3개월)
+ */
+export function formatTenure(hireDate: string | Date | null | undefined): string {
+  if (!hireDate) return '';
+  const start = typeof hireDate === 'string' ? new Date(hireDate) : hireDate;
+  if (isNaN(start.getTime())) return '';
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years > 0 && months > 0) return `${years}년 ${months}개월`;
+  if (years > 0) return `${years}년`;
+  if (months > 0) return `${months}개월`;
+  return '1개월 미만';
+}
+
+/**
+ * 시간을 HH:MM 형식으로 포맷팅합니다.
+ */
+export function formatTime(time: string | Date | null | undefined): string {
+  if (!time) return '';
+  if (typeof time === 'string' && /^\d{2}:\d{2}/.test(time)) {
+    return time.slice(0, 5);
+  }
+  const d = typeof time === 'string' ? new Date(time) : time;
+  if (isNaN(d.getTime())) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}

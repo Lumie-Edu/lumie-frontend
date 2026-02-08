@@ -21,4 +21,8 @@ export const ENV = {
     process.env.NEXT_PUBLIC_SPREADSHEET_SERVICE_URL || '/api/spreadsheet',
   SPREADSHEET_WS_URL:
     process.env.NEXT_PUBLIC_SPREADSHEET_WS_URL || '/ws/spreadsheet',
+  ATTENDANCE_SERVICE_URL:
+    process.env.NEXT_PUBLIC_ATTENDANCE_SERVICE_URL || '/api/attendance',
+  ADMIN_SERVICE_URL:
+    process.env.NEXT_PUBLIC_ADMIN_SERVICE_URL || '/api/admin',
 } as const;

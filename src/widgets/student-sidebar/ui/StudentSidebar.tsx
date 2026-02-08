@@ -8,6 +8,7 @@ import {
   Bell,
   MessageCircle,
   Calendar,
+  CalendarCheck,
   GraduationCap,
 } from 'lucide-react';
 import {
@@ -31,6 +32,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: '대시보드', icon: LayoutDashboard },
+  { href: '/dashboard/attendance', label: '출석', icon: CalendarCheck },
   { href: '/dashboard/exams', label: '시험', icon: FileText },
   { href: '/dashboard/announcements', label: '공지사항', icon: Bell },
   { href: '/dashboard/qna', label: 'Q&A', icon: MessageCircle },
