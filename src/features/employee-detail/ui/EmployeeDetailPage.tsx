@@ -22,8 +22,6 @@ import {
 import { ArrowLeft, User, MoreHorizontal, UserMinus, UserPlus, UserX, Trash2 } from 'lucide-react';
 import { formatPhoneNumber, formatTenure } from '@/src/shared/lib/format';
 import { EmployeeInfoSection } from './EmployeeInfoSection';
-import { WorkScheduleTab } from './WorkScheduleTab';
-import { SalaryTab } from './SalaryTab';
 import { AttendanceTab } from './AttendanceTab';
 import { ContractTab } from './ContractTab';
 
@@ -158,24 +156,14 @@ export function EmployeeDetailPage({ employeeId }: EmployeeDetailPageProps) {
 
       {/* 탭 */}
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="info">기본정보</TabsTrigger>
-          <TabsTrigger value="schedule">근무</TabsTrigger>
-          <TabsTrigger value="salary">급여</TabsTrigger>
-          <TabsTrigger value="attendance" className="hidden sm:inline-flex">출퇴근</TabsTrigger>
-          <TabsTrigger value="contract" className="hidden sm:inline-flex">계약</TabsTrigger>
+          <TabsTrigger value="attendance">출퇴근</TabsTrigger>
+          <TabsTrigger value="contract">계약</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
           <EmployeeInfoSection employee={employee} />
-        </TabsContent>
-
-        <TabsContent value="schedule" className="mt-6">
-          <WorkScheduleTab adminId={employee.id} />
-        </TabsContent>
-
-        <TabsContent value="salary" className="mt-6">
-          <SalaryTab adminId={employee.id} />
         </TabsContent>
 
         <TabsContent value="attendance" className="mt-6">
