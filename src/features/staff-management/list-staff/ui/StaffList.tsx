@@ -2,40 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useEmployees,
   useDeactivateEmployee,
   useReactivateEmployee,
   useDeleteEmployee,
-  type Employee,
   type EmployeeFilter,
   EmploymentStatusLabel,
 } from '@/entities/employee';
-import {
-  useActivePositions,
-  useCreatePosition,
-  useUpdatePosition,
-  useDeletePosition,
-  CreatePositionInput,
-  createPositionSchema,
-} from '@/entities/position';
-import type { Position } from '@/entities/position';
+import { useActivePositions } from '@/entities/position';
 import { useAcademies } from '@/entities/academy';
+import { PositionManagerDialog } from '../../manage-positions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -57,19 +39,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { TablePagination } from '@/src/shared/ui/TablePagination';
+import { TableFilter } from '@/src/shared/ui/TableFilter';
+import { ViewModeToggle, type ViewMode } from '@/src/shared/ui/ViewModeToggle';
+import { PersonCardGrid, PersonCardGridSkeleton } from '@/src/shared/ui/PersonCardGrid';
 import {
   Plus,
   Search,
-  Briefcase,
   Pencil,
   Trash2,
   MoreHorizontal,
@@ -78,18 +54,12 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  LayoutGrid,
-  TableIcon,
-  User,
-  Phone,
 } from 'lucide-react';
 import { CreateStaffForm } from '../../create-staff/ui/CreateStaffForm';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
-import { ApiError } from '@/src/shared/types/api';
 
 type SortField = 'name' | 'hireDate' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
-type ViewMode = 'table' | 'card';
 
 const PAGE_SIZE = 20;
 
@@ -97,26 +67,7 @@ const PAGE_SIZE = 20;
 
 function StaffListSkeleton({ viewMode }: { viewMode: ViewMode }) {
   if (viewMode === 'card') {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="p-6 bg-gradient-to-br from-white to-gray-50 rounded-xl border-2 border-gray-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="w-12 h-12 rounded-full" />
-                <div>
-                  <Skeleton className="h-5 w-24 mb-2" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-gray-100 pt-3">
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <PersonCardGridSkeleton />;
   }
 
   return (
@@ -335,149 +286,113 @@ export function StaffList() {
 
   return (
     <div className="space-y-4 smalltablet:space-y-6">
-      {/* 헤더 */}
-      <div className="flex flex-col smalltablet:flex-row smalltablet:justify-between smalltablet:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl smalltablet:text-3xl font-bold">직원 관리</h1>
-          <Badge variant="secondary" className="text-base px-3 py-1">
-            총 {totalEmployees}명
-          </Badge>
+      {/* 헤더 + 검색 + 액션 */}
+      <div className="flex flex-wrap items-center gap-2 smalltablet:gap-3">
+        <h1 className="text-2xl smalltablet:text-3xl font-bold whitespace-nowrap">직원 관리</h1>
+        <Badge variant="secondary" className="text-base px-3 py-1">
+          총 {totalEmployees}명
+        </Badge>
+        <div className="flex-1" />
+        <div className="relative hidden smalltablet:block smalltablet:w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="이름/아이디/이메일 검색"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearchTerm(searchInput);
+                setCurrentPage(0);
+                setSelectedIds(new Set());
+              }
+            }}
+            className="pl-9"
+          />
         </div>
-        <div className="flex gap-2">
-          {/* 뷰 모드 토글 */}
-          <div className="hidden smalltablet:flex border rounded-lg">
-            <Button
-              variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-              size="icon"
-              className="h-9 w-9 rounded-r-none"
-              onClick={() => setViewMode('table')}
-            >
-              <TableIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'card' ? 'secondary' : 'ghost'}
-              size="icon"
-              className="h-9 w-9 rounded-l-none"
-              onClick={() => setViewMode('card')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </div>
-          <Dialog open={isPositionOpen} onOpenChange={setIsPositionOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Briefcase className="w-4 h-4 mr-2" />
-                직책
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>직책 관리</DialogTitle>
-              </DialogHeader>
-              <PositionManager />
-            </DialogContent>
-          </Dialog>
+        <div className="hidden smalltablet:block">
+          <TableFilter
+            filters={[
+              {
+                key: 'position',
+                label: '직책',
+                value: selectedPosition,
+                defaultValue: 'all',
+                options: [
+                  { value: 'all', label: '전체 직책' },
+                  ...positions.map((p) => ({ value: String(p.id), label: p.name })),
+                ],
+                onChange: (v) => { setSelectedPosition(v); setCurrentPage(0); setSelectedIds(new Set()); },
+              },
+              {
+                key: 'academy',
+                label: '학원',
+                value: selectedAcademy,
+                defaultValue: 'all',
+                options: [
+                  { value: 'all', label: '전체 학원' },
+                  ...academies.map((a) => ({ value: String(a.id), label: a.name })),
+                ],
+                onChange: (v) => { setSelectedAcademy(v); setCurrentPage(0); setSelectedIds(new Set()); },
+              },
+              {
+                key: 'status',
+                label: '상태',
+                value: activeFilter,
+                defaultValue: 'active',
+                options: [
+                  { value: 'all', label: '전체' },
+                  { value: 'active', label: '재직' },
+                  { value: 'inactive', label: '비활성' },
+                ],
+                onChange: (v) => { setActiveFilter(v); setCurrentPage(0); setSelectedIds(new Set()); },
+              },
+            ]}
+            onReset={() => { setCurrentPage(0); setSelectedIds(new Set()); }}
+          />
         </div>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+        <PositionManagerDialog open={isPositionOpen} onOpenChange={setIsPositionOpen} />
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden smalltablet:inline">직원 추가</span>
+              <span className="smalltablet:hidden">추가</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>직원 계정 생성</DialogTitle>
+            </DialogHeader>
+            <CreateStaffForm onSuccess={() => setIsCreateOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* 필터 및 검색 */}
-      <div className="flex flex-col gap-3 smalltablet:gap-4">
-        <div className="flex flex-col smalltablet:flex-row smalltablet:justify-between gap-3 smalltablet:gap-4">
-          <div className="flex gap-2 flex-wrap">
-            <Select value={selectedPosition} onValueChange={(v) => { setSelectedPosition(v); setCurrentPage(0); setSelectedIds(new Set()); }}>
-              <SelectTrigger className="flex-1 smalltablet:w-[150px]">
-                <SelectValue placeholder="직책 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 직책</SelectItem>
-                {positions.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedAcademy} onValueChange={(v) => { setSelectedAcademy(v); setCurrentPage(0); setSelectedIds(new Set()); }}>
-              <SelectTrigger className="flex-1 smalltablet:w-[150px]">
-                <SelectValue placeholder="학원 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 학원</SelectItem>
-                {academies.map((a) => (
-                  <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={activeFilter} onValueChange={(v) => { setActiveFilter(v); setCurrentPage(0); setSelectedIds(new Set()); }}>
-              <SelectTrigger className="flex-1 smalltablet:w-[130px]">
-                <SelectValue placeholder="상태" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="active">재직</SelectItem>
-                <SelectItem value="inactive">비활성</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-2">
-            <div className="relative flex-1 smalltablet:w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="이름/아이디/이메일 검색"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearchTerm(searchInput);
-                    setCurrentPage(0);
-                    setSelectedIds(new Set());
-                  }
-                }}
-                className="pl-9"
-              />
-            </div>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden smalltablet:inline">직원 추가</span>
-                  <span className="smalltablet:hidden">추가</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>직원 계정 생성</DialogTitle>
-                </DialogHeader>
-                <CreateStaffForm onSuccess={() => setIsCreateOpen(false)} />
-              </DialogContent>
-            </Dialog>
-          </div>
+      {/* 배치 액션 */}
+      {someSelected && (
+        <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg flex-wrap">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{selectedIds.size}명 선택</span>
+          <Button
+            variant="outline" size="sm"
+            onClick={handleBatchDeactivate}
+            disabled={isDeactivating}
+            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+          >
+            <UserMinus className="w-4 h-4 mr-1" />
+            비활성화
+          </Button>
+          <Button
+            variant="outline" size="sm"
+            onClick={handleBatchReactivate}
+            disabled={isReactivating}
+            className="text-green-600 border-green-600 hover:bg-green-50"
+          >
+            <UserPlus className="w-4 h-4 mr-1" />
+            재활성화
+          </Button>
         </div>
-
-        {/* 배치 액션 */}
-        {someSelected && (
-          <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg flex-wrap">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">{selectedIds.size}명 선택</span>
-            <Button
-              variant="outline" size="sm"
-              onClick={handleBatchDeactivate}
-              disabled={isDeactivating}
-              className="text-orange-600 border-orange-600 hover:bg-orange-50"
-            >
-              <UserMinus className="w-4 h-4 mr-1" />
-              비활성화
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              onClick={handleBatchReactivate}
-              disabled={isReactivating}
-              className="text-green-600 border-green-600 hover:bg-green-50"
-            >
-              <UserPlus className="w-4 h-4 mr-1" />
-              재활성화
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 목록 */}
       {isLoading ? (
@@ -494,48 +409,18 @@ export function StaffList() {
           )}
         </div>
       ) : viewMode === 'card' ? (
-        /* Card View */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {employees.map((emp) => (
-            <div
-              key={emp.id}
-              className="group cursor-pointer"
-              onClick={() => handleNavigateToDetail(emp.id)}
-            >
-              <div className="relative p-6 bg-gradient-to-br from-white to-gray-50 rounded-xl border-2 border-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-lg">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full flex items-center justify-center shadow-md">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-gray-900">{emp.name}</h3>
-                        {emp.employmentStatus && emp.employmentStatus !== 'ACTIVE' && (
-                          <StatusBadge status={emp.employmentStatus} />
-                        )}
-                      </div>
-                      {emp.position && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {emp.position.name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="border-t border-gray-100 pt-3 space-y-1">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                    <span>{emp.phone ? formatPhoneNumber(emp.phone) : '-'}</span>
-                  </div>
-                  {emp.email && (
-                    <p className="text-sm text-gray-500 truncate">{emp.email}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PersonCardGrid
+          items={employees.map((emp) => ({
+            id: emp.id,
+            name: emp.name,
+            phone: emp.phone,
+            subtitle: emp.position?.name,
+            badge: emp.employmentStatus && emp.employmentStatus !== 'ACTIVE' ? (
+              <StatusBadge status={emp.employmentStatus} />
+            ) : undefined,
+          }))}
+          onItemClick={(id) => handleNavigateToDetail(id)}
+        />
       ) : (
         <>
           {/* Mobile Card View */}
@@ -691,186 +576,11 @@ export function StaffList() {
         </>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination className="mt-6">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => { setCurrentPage((p) => Math.max(0, p - 1)); setSelectedIds(new Set()); }}
-                className={currentPage === 0 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            {(() => {
-              const pages: (number | 'ellipsis')[] = [];
-              const showPages = 5;
-              if (totalPages <= showPages + 2) {
-                for (let i = 0; i < totalPages; i++) pages.push(i);
-              } else {
-                pages.push(0);
-                let start = Math.max(1, currentPage - 1);
-                let end = Math.min(totalPages - 2, currentPage + 1);
-                if (currentPage < 3) end = Math.min(totalPages - 2, 3);
-                if (currentPage > totalPages - 4) start = Math.max(1, totalPages - 4);
-                if (start > 1) pages.push('ellipsis');
-                for (let i = start; i <= end; i++) pages.push(i);
-                if (end < totalPages - 2) pages.push('ellipsis');
-                pages.push(totalPages - 1);
-              }
-              return pages.map((page, index) =>
-                page === 'ellipsis' ? (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={currentPage === page}
-                      onClick={() => { setCurrentPage(page); setSelectedIds(new Set()); }}
-                    >
-                      {page + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              );
-            })()}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => { setCurrentPage((p) => Math.min(totalPages - 1, p + 1)); setSelectedIds(new Set()); }}
-                className={currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => { setCurrentPage(page); setSelectedIds(new Set()); }}
+      />
     </div>
-  );
-}
-
-// ─── Position Manager (modal) ───
-
-function PositionManager() {
-  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
-  const { data: positions, isLoading } = useActivePositions();
-  const { mutate: deletePosition } = useDeletePosition();
-
-  const handleDelete = (id: number) => {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      deletePosition(id);
-      if (editingPosition?.id === id) setEditingPosition(null);
-    }
-  };
-
-  if (editingPosition) {
-    return <EditPositionForm position={editingPosition} onBack={() => setEditingPosition(null)} onDelete={handleDelete} />;
-  }
-
-  return (
-    <div className="space-y-4">
-      <CreatePositionForm />
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-medium text-muted-foreground mb-3">등록된 직책</h4>
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
-          </div>
-        ) : !positions?.length ? (
-          <p className="text-sm text-muted-foreground text-center py-4">등록된 직책이 없습니다.</p>
-        ) : (
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {positions.map((position) => (
-              <div key={position.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="font-medium">{position.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingPosition(position)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleDelete(position.id)}>
-                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CreatePositionForm() {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreatePositionInput>({
-    resolver: zodResolver(createPositionSchema),
-    defaultValues: { name: '' },
-  });
-  const { mutate: createPosition, isPending, error } = useCreatePosition();
-  const apiError = error as ApiError | null;
-
-  const onSubmit = (data: CreatePositionInput) => {
-    createPosition(data, { onSuccess: () => reset() });
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-      {apiError && (
-        <div className="p-2 rounded-lg bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600">{apiError.message}</p>
-        </div>
-      )}
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <Input placeholder="직책명 (예: 원장, 강사)" {...register('name')} />
-          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
-        </div>
-        <Button type="submit" size="sm" disabled={isPending}>
-          <Plus className="w-4 h-4 mr-1" />
-          {isPending ? '추가 중...' : '추가'}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-interface EditPositionFormProps {
-  position: Position;
-  onBack: () => void;
-  onDelete: (id: number) => void;
-}
-
-function EditPositionForm({ position, onBack, onDelete }: EditPositionFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<CreatePositionInput>({
-    resolver: zodResolver(createPositionSchema),
-    defaultValues: { name: position.name },
-  });
-  const { mutate: updatePosition, isPending, error } = useUpdatePosition(position.id);
-  const apiError = error as ApiError | null;
-
-  const onSubmit = (data: CreatePositionInput) => {
-    updatePosition(data, { onSuccess: onBack });
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {apiError && (
-        <div className="p-2 rounded-lg bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600">{apiError.message}</p>
-        </div>
-      )}
-      <div className="space-y-2">
-        <Label>직책명 *</Label>
-        <Input {...register('name')} />
-        {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-      </div>
-      <div className="flex justify-between pt-2">
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onBack}>뒤로</Button>
-          <Button type="button" variant="destructive" onClick={() => { onDelete(position.id); onBack(); }}>삭제</Button>
-        </div>
-        <Button type="submit" disabled={isPending}>{isPending ? '수정 중...' : '수정'}</Button>
-      </div>
-    </form>
   );
 }

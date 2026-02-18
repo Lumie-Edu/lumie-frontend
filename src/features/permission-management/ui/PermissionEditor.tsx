@@ -36,7 +36,7 @@ import {
   Calendar,
   CreditCard,
   BookOpen,
-  Table,
+  Table as TableIcon,
   LayoutGrid,
   Star,
   Users,
@@ -82,7 +82,7 @@ const PERMISSION_ICONS: Record<string, LucideIcon> = {
   COUNSELING_MANAGEMENT: Calendar,
   BILLING: CreditCard,
   TEXTBOOK_MANAGEMENT: BookOpen,
-  SPREADSHEET: Table,
+  SPREADSHEET: TableIcon,
   ACADEMY_MANAGEMENT: LayoutGrid,
   REVIEW_MANAGEMENT: Star,
 };
@@ -113,7 +113,7 @@ const LEVEL_STYLES: Record<AccessLevel, { card: string; icon: string; segment: s
 
 /* ──────────────────────── Component ──────────────────────── */
 
-export function PermissionPage() {
+export function PermissionEditor() {
   const [selectedPositionId, setSelectedPositionId] = useState<number>(0);
   const [permissionMap, setPermissionMap] = useState<Record<string, AccessLevel>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -123,7 +123,6 @@ export function PermissionPage() {
   const { data: positionPermissions, isLoading: isLoadingPosPerms } = usePositionPermissions(selectedPositionId);
   const { mutate: savePermissions, isPending: isSaving } = useSetPositionPermissions(selectedPositionId);
 
-  // Build initial map from server data
   useEffect(() => {
     if (positionPermissions && categories) {
       const map: Record<string, AccessLevel> = {};
@@ -164,7 +163,6 @@ export function PermissionPage() {
 
   const selectedPosition = positions?.find((p) => p.id === selectedPositionId);
 
-  // Stats per category
   const categoryStats = useMemo(() => {
     if (!categories) return {};
     const stats: Record<string, { write: number; read: number; total: number }> = {};
@@ -177,61 +175,55 @@ export function PermissionPage() {
   }, [categories, permissionMap]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Shield className="h-6 w-6" />
-          <h1 className="text-2xl sm:text-3xl font-bold">권한 관리</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select
-            value={selectedPositionId ? String(selectedPositionId) : ''}
-            onValueChange={(v) => setSelectedPositionId(Number(v))}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="직책 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoadingPositions ? (
-                <SelectItem value="loading" disabled>로딩 중...</SelectItem>
-              ) : (
-                positions?.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          {isDirty && (
-            <Button onClick={handleSave} disabled={isSaving}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? '저장 중...' : '저장'}
-            </Button>
-          )}
-        </div>
+    <div className="space-y-4">
+      {/* Position Select + Save */}
+      <div className="flex items-center gap-3">
+        <Select
+          value={selectedPositionId ? String(selectedPositionId) : ''}
+          onValueChange={(v) => setSelectedPositionId(Number(v))}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="직책 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            {isLoadingPositions ? (
+              <SelectItem value="loading" disabled>로딩 중...</SelectItem>
+            ) : (
+              positions?.map((p) => (
+                <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+        {isDirty && (
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-1" />
+            {isSaving ? '저장 중...' : '저장'}
+          </Button>
+        )}
       </div>
 
       {/* Permission Cards */}
       {!selectedPositionId ? (
-        <div className="text-center py-16 bg-muted/50 rounded-lg">
-          <Shield className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground text-lg">직책을 선택하여 권한을 설정하세요.</p>
+        <div className="text-center py-10 bg-muted/50 rounded-lg">
+          <Shield className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-muted-foreground text-sm">직책을 선택하여 권한을 설정하세요.</p>
         </div>
       ) : isLoadingPerms || isLoadingPosPerms ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3">
-              <Skeleton className="h-8 w-40 rounded" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {Array.from({ length: 4 }).map((_, j) => (
-                  <Skeleton key={j} className="h-40 rounded-xl" />
+              <Skeleton className="h-6 w-32 rounded" />
+              <div className="grid grid-cols-2 smalltablet:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, j) => (
+                  <Skeleton key={j} className="h-36 rounded-xl" />
                 ))}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
           {selectedPosition && (
             <p className="text-sm text-muted-foreground">
               <span className="font-medium">{selectedPosition.name}</span> 직책의 권한을 설정합니다.
@@ -248,11 +240,10 @@ export function PermissionPage() {
 
             return (
               <section key={cat.category} className="space-y-3">
-                {/* Category Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CategoryIcon className="h-5 w-5 text-muted-foreground" />
-                    <h2 className="text-lg font-semibold">{categoryLabel}</h2>
+                    <h2 className="text-base font-semibold">{categoryLabel}</h2>
                     {stats && (
                       <Badge variant="secondary" className="text-xs">
                         {stats.write + stats.read}/{stats.total}
@@ -273,8 +264,7 @@ export function PermissionPage() {
                   </div>
                 </div>
 
-                {/* Permission Card Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 smalltablet:grid-cols-3 gap-3">
                   {cat.permissions.map((perm) => {
                     const Icon = PERMISSION_ICONS[perm.code] ?? Shield;
                     const level = permissionMap[perm.code] ?? 'NONE';
@@ -293,8 +283,6 @@ export function PermissionPage() {
                         {perm.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{perm.description}</p>
                         )}
-
-                        {/* Segment Toggle */}
                         <div className="flex w-full mt-auto pt-3 gap-0.5 rounded-lg bg-muted/50 p-0.5">
                           {ACCESS_LEVELS.map((opt) => (
                             <button

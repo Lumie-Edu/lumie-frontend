@@ -21,7 +21,6 @@ import {
   LogOut,
   Settings,
   CalendarCheck,
-  Shield,
   ClipboardList,
   Send,
   CreditCard,
@@ -81,7 +80,6 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/admin/students', label: '수강생 관리', icon: GraduationCap },
       { href: '/admin/staff', label: '직원 관리', icon: UserCog },
-      { href: '/admin/staff/permissions', label: '권한 관리', icon: Shield },
       { href: '/admin/attendance', label: '출석 관리', icon: CalendarCheck },
     ],
   },
