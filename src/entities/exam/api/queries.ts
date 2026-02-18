@@ -15,12 +15,25 @@ interface ExamQueryParams extends PaginationParams {
   status?: string;
 }
 
+export interface QuestionResult {
+  id: number;
+  questionNumber: number;
+  selectedChoice: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  score: number;
+  earnedScore: number;
+  questionType: string;
+}
+
 const QUERY_KEYS = {
   all: ['exams'] as const,
   list: (params?: ExamQueryParams) => [...QUERY_KEYS.all, 'list', params] as const,
   detail: (id: number) => [...QUERY_KEYS.all, 'detail', id] as const,
   results: (examId: number) => [...QUERY_KEYS.all, 'results', examId] as const,
   studentResults: () => ['student-exam-results'] as const,
+  studentExamResults: (studentId: number) => [...QUERY_KEYS.all, 'student-results', studentId] as const,
+  questionResults: (resultId: number) => [...QUERY_KEYS.all, 'questions', resultId] as const,
 };
 
 export function useExams(params?: ExamQueryParams) {
@@ -140,6 +153,24 @@ export function useMyExamResults() {
     queryKey: QUERY_KEYS.studentResults(),
     queryFn: () =>
       examClient.get<PaginatedResponse<ExamResult>>('/api/v1/exams/my-results'),
+  });
+}
+
+// Student Exam Results
+export function useStudentExamResults(studentId: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.studentExamResults(studentId),
+    queryFn: () => examClient.get<ExamResult[]>(`/api/v1/students/${studentId}/results`),
+    enabled: studentId > 0,
+  });
+}
+
+// Question Results
+export function useQuestionResults(resultId: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.questionResults(resultId),
+    queryFn: () => examClient.get<QuestionResult[]>(`/api/v1/results/${resultId}/questions`),
+    enabled: resultId > 0,
   });
 }
 

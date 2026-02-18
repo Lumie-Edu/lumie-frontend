@@ -1,6 +1,7 @@
 export {
   type AttendanceSession,
   type AttendanceRecord,
+  type StudentAttendanceRecord,
   type AttendanceStatus,
   type SessionStatus,
   type CheckMethod,
@@ -11,6 +12,7 @@ export {
   type CheckInResponse,
   attendanceSessionSchema,
   attendanceRecordSchema,
+  studentAttendanceRecordSchema,
   attendanceStatusSchema,
   sessionStatusSchema,
   checkMethodSchema,
@@ -32,4 +34,5 @@ export {
   useUpdateAttendanceStatus,
   useBulkUpdateAttendance,
   useCheckIn,
+  useStudentAttendanceRecords,
 } from './api/queries';

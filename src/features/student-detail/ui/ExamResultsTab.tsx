@@ -1,0 +1,239 @@
+'use client';
+
+import { useState } from 'react';
+import { useStudentExamResults, type ExamResult } from '@/entities/exam';
+import { useStabilityIndex } from '@/src/features/grade-management/api/statistics-queries';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {
+  ClipboardList,
+  TrendingUp,
+  Trophy,
+  AlertTriangle,
+  ArrowLeft,
+} from 'lucide-react';
+import { formatDate } from '@/src/shared/lib/format';
+import { ExamDetailView } from './ExamDetailView';
+
+interface ExamResultsTabProps {
+  studentId: number;
+}
+
+const chartConfig = {
+  score: {
+    label: '점수',
+    color: 'hsl(var(--chart-1))',
+  },
+} satisfies ChartConfig;
+
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  colorClass,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  colorClass: string;
+}) {
+  return (
+    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex items-start justify-between mb-2">
+        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <div className={`p-2 rounded-xl ${colorClass}`}>
+          <Icon className="w-4 h-4 text-white" />
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+    </div>
+  );
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 90) return 'text-green-600';
+  if (score >= 70) return 'text-blue-600';
+  if (score >= 50) return 'text-yellow-600';
+  return 'text-red-600';
+}
+
+function getGradeLabel(grade: number | undefined | null): string {
+  if (grade == null) return '-';
+  return `${grade}등급`;
+}
+
+export function ExamResultsTab({ studentId }: ExamResultsTabProps) {
+  const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+
+  const { data: results, isLoading } = useStudentExamResults(studentId);
+  const { data: stability } = useStabilityIndex(studentId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (selectedResultId && selectedExamId) {
+    return (
+      <ExamDetailView
+        studentId={studentId}
+        resultId={selectedResultId}
+        examId={selectedExamId}
+        onBack={() => {
+          setSelectedResultId(null);
+          setSelectedExamId(null);
+        }}
+      />
+    );
+  }
+
+  const examResults = results ?? [];
+  const totalExams = examResults.length;
+  const scores = examResults.map((r) => r.score);
+  const avgScore = totalExams > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / totalExams) : 0;
+  const maxScore = totalExams > 0 ? Math.max(...scores) : 0;
+  const minScore = totalExams > 0 ? Math.min(...scores) : 0;
+
+  const chartData =
+    stability?.scoreHistory?.map((h) => ({
+      name: h.examName,
+      score: h.score,
+      grade: h.grade,
+      date: h.examDate,
+    })) ?? [];
+
+  return (
+    <div className="space-y-6">
+      {/* 성과 지표 카드 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <MetricCard
+          label="총 시험 수"
+          value={totalExams}
+          icon={ClipboardList}
+          colorClass="bg-blue-500"
+        />
+        <MetricCard
+          label="평균 점수"
+          value={avgScore}
+          icon={TrendingUp}
+          colorClass={avgScore >= 80 ? 'bg-green-500' : avgScore >= 60 ? 'bg-yellow-500' : 'bg-orange-500'}
+        />
+        <MetricCard
+          label="최고 점수"
+          value={maxScore}
+          icon={Trophy}
+          colorClass="bg-yellow-500"
+        />
+        <MetricCard
+          label="최저 점수"
+          value={minScore}
+          icon={AlertTriangle}
+          colorClass="bg-orange-500"
+        />
+      </div>
+
+      {/* 점수 추이 차트 */}
+      {chartData.length > 1 && (
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="text-lg font-semibold mb-4">점수 추이</h3>
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12 }}
+                interval={0}
+                angle={-30}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    formatter={(value, name) => [
+                      <span key="value" className="font-bold">{value}점</span>,
+                      '점수',
+                    ]}
+                  />
+                }
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="hsl(var(--chart-1))"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ChartContainer>
+        </div>
+      )}
+
+      {/* 시험 목록 */}
+      {totalExams === 0 ? (
+        <div className="text-center py-12 bg-muted/50 rounded-lg">
+          <p className="text-muted-foreground">시험 결과가 없습니다.</p>
+        </div>
+      ) : (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">시험 목록</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {examResults.map((result) => (
+              <button
+                key={result.id}
+                className="bg-white rounded-xl border p-5 text-left hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => {
+                  setSelectedResultId(result.id);
+                  setSelectedExamId(result.examId);
+                }}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-sm truncate">
+                      {result.examName ?? `시험 #${result.examId}`}
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {formatDate(result.submittedAt || result.createdAt)}
+                    </p>
+                  </div>
+                  {result.grade != null && (
+                    <Badge variant="outline" className="shrink-0 ml-2">
+                      {getGradeLabel(result.grade)}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-end justify-between">
+                  <span className={`text-3xl font-bold ${getScoreColor(result.score)}`}>
+                    {result.score}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    / {result.totalScore ?? 100}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

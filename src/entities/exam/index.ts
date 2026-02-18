@@ -22,6 +22,7 @@ export {
 } from './model/schema';
 
 export {
+  type QuestionResult,
   useExams,
   useExam,
   useCreateExam,
@@ -32,6 +33,8 @@ export {
   useExamResults,
   useSubmitExamResult,
   useMyExamResults,
+  useStudentExamResults,
+  useQuestionResults,
   useGenerateReport,
   buildReportUrl,
 } from './api/queries';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   useStudents,
   useDeactivateStudent,
@@ -133,6 +134,7 @@ function SortableHeader({ field, label, currentSort, currentDirection, onSort, c
 const PAGE_SIZE = 20;
 
 export function StudentList() {
+  const router = useRouter();
   const [selectedAcademy, setSelectedAcademy] = useState<string>('all');
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchInput, setSearchInput] = useState('');
@@ -381,7 +383,7 @@ export function StudentList() {
               <Badge variant="outline" className="text-xs text-red-500 border-red-500">퇴원</Badge>
             ) : undefined,
           }))}
-          onItemClick={(id) => setEditingId(id)}
+          onItemClick={(id) => router.push(`/admin/students/${id}`)}
         />
       ) : (
         <>
@@ -403,7 +405,7 @@ export function StudentList() {
                 <div
                   key={student.id}
                   className={`rounded-lg border p-4 cursor-pointer hover:bg-muted/50 transition-colors ${isSelected ? 'bg-muted/30 border-primary/30' : ''}`}
-                  onClick={() => setEditingId(student.id)}
+                  onClick={() => router.push(`/admin/students/${student.id}`)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
@@ -548,7 +550,7 @@ export function StudentList() {
                     <TableRow
                       key={student.id}
                       className={`cursor-pointer hover:bg-muted/50 text-base ${isSelected ? 'bg-muted/30' : ''}`}
-                      onClick={() => setEditingId(student.id)}
+                      onClick={() => router.push(`/admin/students/${student.id}`)}
                     >
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox

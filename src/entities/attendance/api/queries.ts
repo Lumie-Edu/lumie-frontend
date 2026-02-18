@@ -4,6 +4,7 @@ import { attendanceClient } from '@/src/shared/api/base';
 import {
   AttendanceSession,
   AttendanceRecord,
+  StudentAttendanceRecord,
   CreateSessionInput,
   UpdateStatusInput,
   BulkUpdateInput,
@@ -24,6 +25,7 @@ const QUERY_KEYS = {
   sessions: (params?: SessionQueryParams) => [...QUERY_KEYS.all, 'sessions', params] as const,
   session: (id: number) => [...QUERY_KEYS.all, 'session', id] as const,
   records: (sessionId: number) => [...QUERY_KEYS.all, 'records', sessionId] as const,
+  studentRecords: (studentId: number) => [...QUERY_KEYS.all, 'student-records', studentId] as const,
 };
 
 export function useAttendanceSessions(params?: SessionQueryParams) {
@@ -155,5 +157,16 @@ export function useCheckIn() {
   return useMutation({
     mutationFn: (data: CheckInInput) =>
       attendanceClient.post<CheckInResponse>('/api/v1/attendance/check-in', data),
+  });
+}
+
+export function useStudentAttendanceRecords(studentId: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.studentRecords(studentId),
+    queryFn: () =>
+      attendanceClient.get<StudentAttendanceRecord[]>(
+        `/api/v1/attendance/students/${studentId}/records`
+      ),
+    enabled: studentId > 0,
   });
 }

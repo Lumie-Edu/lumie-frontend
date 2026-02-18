@@ -44,6 +44,21 @@ export const attendanceRecordSchema = z.object({
 
 export type AttendanceRecord = z.infer<typeof attendanceRecordSchema>;
 
+export const studentAttendanceRecordSchema = z.object({
+  id: z.number(),
+  sessionId: z.number(),
+  sessionName: z.string(),
+  sessionDate: z.string(),
+  studentId: z.number(),
+  studentName: z.string(),
+  status: attendanceStatusSchema,
+  checkMethod: checkMethodSchema,
+  checkedAt: z.string().nullable().optional(),
+  memo: z.string().nullable().optional(),
+});
+
+export type StudentAttendanceRecord = z.infer<typeof studentAttendanceRecordSchema>;
+
 export const createSessionSchema = z.object({
   name: z.string().min(1, '세션명을 입력해주세요.').max(100, '세션명은 100자를 초과할 수 없습니다.'),
   sessionDate: z.string().min(1, '날짜를 선택해주세요.'),
