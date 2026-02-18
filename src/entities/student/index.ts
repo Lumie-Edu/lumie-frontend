@@ -21,7 +21,6 @@ export {
   useBatchDeactivate,
   useBatchReactivate,
   useBatchDelete,
-  type SearchField,
 } from './api/queries';
 
 export { StudentCard } from './ui/StudentCard';

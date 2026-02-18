@@ -4,12 +4,9 @@ import { academyClient } from '@/src/shared/api/base';
 import { Student, CreateStudentInput, UpdateStudentInput, BulkImportStudentInput } from '../model/schema';
 import { PaginatedResponse, PaginationParams } from '@/src/shared/types/api';
 
-export type SearchField = 'name' | 'studentHighschool' | 'studentBirthYear' | 'phone';
-
 interface StudentQueryParams extends PaginationParams {
   academyId?: number;
   search?: string;
-  searchField?: SearchField;
   isActive?: boolean;
 }
 
@@ -30,7 +27,6 @@ export function useStudents(params?: StudentQueryParams) {
       if (params?.academyId !== undefined) searchParams.set('academyId', String(params.academyId));
       if (params?.isActive !== undefined) searchParams.set('isActive', String(params.isActive));
       if (params?.search) searchParams.set('search', params.search);
-      if (params?.searchField) searchParams.set('searchField', params.searchField);
       const query = searchParams.toString();
       return academyClient.get<PaginatedResponse<Student>>(
         `/api/v1/students${query ? `?${query}` : ''}`

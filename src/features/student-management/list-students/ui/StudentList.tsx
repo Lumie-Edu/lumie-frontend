@@ -9,20 +9,12 @@ import {
   useBatchDeactivate,
   useBatchReactivate,
   useBatchDelete,
-  type SearchField,
 } from '@/entities/student';
 import { useAcademies } from '@/entities/academy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -38,15 +30,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { TablePagination } from '@/src/shared/ui/TablePagination';
+import { TableFilter } from '@/src/shared/ui/TableFilter';
+import { ViewModeToggle, type ViewMode } from '@/src/shared/ui/ViewModeToggle';
+import { PersonCardGrid, PersonCardGridSkeleton } from '@/src/shared/ui/PersonCardGrid';
 import { Plus, Search, MoreHorizontal, Trash2, Edit, UserMinus, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { EditStudentModal } from '../../edit-student/ui/EditStudentModal';
 import { RegisterStudentModal } from '../../register-student/ui/RegisterStudentModal';
@@ -55,7 +42,10 @@ import { formatPhoneNumber } from '@/src/shared/lib/format';
 type SortField = 'name' | 'academyName' | 'phone' | 'studentHighschool' | 'studentBirthYear';
 type SortDirection = 'asc' | 'desc';
 
-function StudentListSkeleton() {
+function StudentListSkeleton({ viewMode }: { viewMode: ViewMode }) {
+  if (viewMode === 'card') {
+    return <PersonCardGridSkeleton />;
+  }
   return (
     <>
       {/* Mobile skeleton */}
@@ -147,19 +137,18 @@ export function StudentList() {
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchField, setSearchField] = useState<SearchField>('name');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(0);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   const { data: academiesData } = useAcademies();
   const { data, isLoading, error } = useStudents({
     academyId: selectedAcademy !== 'all' ? Number(selectedAcademy) : undefined,
     search: searchTerm || undefined,
-    searchField: searchTerm ? searchField : undefined,
     isActive: activeFilter === 'all' ? undefined : activeFilter === 'active',
     page: currentPage,
     size: PAGE_SIZE,
@@ -276,139 +265,124 @@ export function StudentList() {
 
   return (
     <div className="space-y-4 smalltablet:space-y-6">
-      {/* 헤더 */}
-      <div className="flex flex-col smalltablet:flex-row smalltablet:justify-between smalltablet:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl smalltablet:text-3xl font-bold">학생 목록</h1>
-          <Badge variant="secondary" className="text-base smalltablet:text-lg px-3 py-1">
-            총 {totalStudents}명
-          </Badge>
+      {/* 헤더 + 검색 + 액션 */}
+      <div className="flex flex-wrap items-center gap-2 smalltablet:gap-3">
+        <h1 className="text-2xl smalltablet:text-3xl font-bold whitespace-nowrap">학생 목록</h1>
+        <Badge variant="secondary" className="text-base px-3 py-1">
+          총 {totalStudents}명
+        </Badge>
+        <div className="flex-1" />
+        <div className="relative hidden smalltablet:block smalltablet:w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="이름/학교/생년/전화번호 검색"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearchTerm(searchInput);
+                setCurrentPage(0);
+                setSelectedIds(new Set());
+              }
+            }}
+            className="pl-9"
+          />
         </div>
-        <Button onClick={() => setIsRegisterOpen(true)} className="smalltablet:hidden w-full">
+        <div className="hidden smalltablet:block">
+        <TableFilter
+          filters={[
+            {
+              key: 'academy',
+              label: '학원',
+              value: selectedAcademy,
+              defaultValue: 'all',
+              options: [
+                { value: 'all', label: '전체 학원' },
+                ...academies.map((a) => ({ value: String(a.id), label: a.name })),
+              ],
+              onChange: (v) => { setSelectedAcademy(v); setCurrentPage(0); setSelectedIds(new Set()); },
+            },
+            {
+              key: 'status',
+              label: '상태',
+              value: activeFilter,
+              defaultValue: 'active',
+              options: [
+                { value: 'all', label: '전체' },
+                { value: 'active', label: '재원' },
+                { value: 'inactive', label: '퇴원' },
+              ],
+              onChange: (v) => { setActiveFilter(v); setCurrentPage(0); setSelectedIds(new Set()); },
+            },
+          ]}
+          onReset={() => { setCurrentPage(0); setSelectedIds(new Set()); }}
+        />
+        </div>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+        <Button onClick={() => setIsRegisterOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          학생 추가
+          <span className="hidden smalltablet:inline">학생 추가</span>
+          <span className="smalltablet:hidden">추가</span>
         </Button>
       </div>
 
-      {/* 필터 및 검색 */}
-      <div className="flex flex-col gap-3 smalltablet:gap-4">
-        {/* 필터 + 검색 행 */}
-        <div className="flex flex-col smalltablet:flex-row smalltablet:justify-between gap-3 smalltablet:gap-4">
-          <div className="flex gap-2">
-            <Select value={selectedAcademy} onValueChange={(value) => {
-              setSelectedAcademy(value);
-              setCurrentPage(0);
-              setSelectedIds(new Set());
-            }}>
-              <SelectTrigger className="flex-1 smalltablet:w-[180px]">
-                <SelectValue placeholder="학원 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 학원</SelectItem>
-                {academies.map((academy) => (
-                  <SelectItem key={academy.id} value={String(academy.id)}>
-                    {academy.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={activeFilter} onValueChange={(value) => {
-              setActiveFilter(value);
-              setCurrentPage(0);
-              setSelectedIds(new Set());
-            }}>
-              <SelectTrigger className="flex-1 smalltablet:w-[140px]">
-                <SelectValue placeholder="상태 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="active">재원</SelectItem>
-                <SelectItem value="inactive">퇴원</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 검색 + 학생 추가 */}
-          <div className="flex gap-2">
-            <Select value={searchField} onValueChange={(value: SearchField) => setSearchField(value)}>
-              <SelectTrigger className="w-[100px] smalltablet:w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">이름</SelectItem>
-                <SelectItem value="studentHighschool">학교</SelectItem>
-                <SelectItem value="studentBirthYear">생년</SelectItem>
-                <SelectItem value="phone">전화번호</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative flex-1 smalltablet:w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="검색어 입력 후 Enter"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setSearchTerm(searchInput);
-                    setCurrentPage(0);
-                    setSelectedIds(new Set());
-                  }
-                }}
-                className="pl-9"
-              />
-            </div>
-            <Button onClick={() => setIsRegisterOpen(true)} className="hidden smalltablet:inline-flex">
-              <Plus className="w-4 h-4 mr-2" />
-              학생 추가
-            </Button>
-          </div>
+      {/* 배치 액션 */}
+      {someSelected && (
+        <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg flex-wrap">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{selectedIds.size}명 선택</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchDeactivate}
+            disabled={isBatchProcessing}
+            className="text-orange-600 border-orange-600 hover:bg-orange-50"
+          >
+            <UserMinus className="w-4 h-4 mr-1" />
+            퇴원
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchReactivate}
+            disabled={isBatchProcessing}
+            className="text-green-600 border-green-600 hover:bg-green-50"
+          >
+            <UserPlus className="w-4 h-4 mr-1" />
+            재등록
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchDelete}
+            disabled={isBatchProcessing}
+            className="text-red-600 border-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            삭제
+          </Button>
         </div>
-
-        {/* 배치 액션 (선택 시에만 별도 행으로 표시) */}
-        {someSelected && (
-          <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg flex-wrap">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">{selectedIds.size}명 선택</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBatchDeactivate}
-              disabled={isBatchProcessing}
-              className="text-orange-600 border-orange-600 hover:bg-orange-50"
-            >
-              <UserMinus className="w-4 h-4 mr-1" />
-              퇴원
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBatchReactivate}
-              disabled={isBatchProcessing}
-              className="text-green-600 border-green-600 hover:bg-green-50"
-            >
-              <UserPlus className="w-4 h-4 mr-1" />
-              재등록
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBatchDelete}
-              disabled={isBatchProcessing}
-              className="text-red-600 border-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              삭제
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 테이블 / 카드 목록 */}
       {isLoading ? (
-        <StudentListSkeleton />
+        <StudentListSkeleton viewMode={viewMode} />
       ) : students.length === 0 ? (
         <div className="text-center py-12 bg-muted/50 rounded-lg">
           <p className="text-muted-foreground">검색된 학생이 없습니다.</p>
         </div>
+      ) : viewMode === 'card' ? (
+        <PersonCardGrid
+          items={students.map((s) => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone,
+            subtitle: s.academyName,
+            badge: !s.isActive ? (
+              <Badge variant="outline" className="text-xs text-red-500 border-red-500">퇴원</Badge>
+            ) : undefined,
+          }))}
+          onItemClick={(id) => setEditingId(id)}
+        />
       ) : (
         <>
           {/* 모바일 카드 뷰 */}
@@ -666,82 +640,11 @@ export function StudentList() {
         </>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination className="mt-6">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => {
-                  setCurrentPage((p) => Math.max(0, p - 1));
-                  setSelectedIds(new Set());
-                }}
-                className={currentPage === 0 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-
-            {(() => {
-              const pages: (number | 'ellipsis')[] = [];
-              const showPages = 5;
-
-              if (totalPages <= showPages + 2) {
-                for (let i = 0; i < totalPages; i++) pages.push(i);
-              } else {
-                pages.push(0);
-
-                let start = Math.max(1, currentPage - 1);
-                let end = Math.min(totalPages - 2, currentPage + 1);
-
-                if (currentPage < 3) {
-                  end = Math.min(totalPages - 2, 3);
-                }
-
-                if (currentPage > totalPages - 4) {
-                  start = Math.max(1, totalPages - 4);
-                }
-
-                if (start > 1) pages.push('ellipsis');
-
-                for (let i = start; i <= end; i++) pages.push(i);
-
-                if (end < totalPages - 2) pages.push('ellipsis');
-
-                pages.push(totalPages - 1);
-              }
-
-              return pages.map((page, index) =>
-                page === 'ellipsis' ? (
-                  <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={currentPage === page}
-                      onClick={() => {
-                        setCurrentPage(page);
-                        setSelectedIds(new Set());
-                      }}
-                    >
-                      {page + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              );
-            })()}
-
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => {
-                  setCurrentPage((p) => Math.min(totalPages - 1, p + 1));
-                  setSelectedIds(new Set());
-                }}
-                className={currentPage === totalPages - 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => { setCurrentPage(page); setSelectedIds(new Set()); }}
+      />
 
       {/* Edit Modal */}
       <EditStudentModal
