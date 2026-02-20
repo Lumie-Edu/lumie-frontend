@@ -5,10 +5,15 @@ export { OmrProWorkspace } from './ui/OmrProWorkspace';
 export {
     useGradeOmr,
     useGradeOmrBatch,
+    useSubmitOmrGrading,
+    useOmrJobStatus,
+    useOmrJobs,
     MAX_IMAGES,
     type OmrGradingResult,
     type OmrQuestionResult,
     type OmrGradingRequest,
     type OmrGradingResultWithFile,
     type OmrBatchResponse,
+    type OmrJobResponse,
+    type OmrJobStatusResponse,
 } from './api/queries';

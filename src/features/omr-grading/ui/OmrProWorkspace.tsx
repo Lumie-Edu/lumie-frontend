@@ -1,23 +1,21 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
     Upload, Image as ImageIcon, X, Loader2, Sparkles,
-    FileCheck, ShieldAlert, CheckCircle2, XCircle, Phone, RotateCcw, ArrowLeft
+    FileCheck, ShieldAlert, CheckCircle2, XCircle, Phone, RotateCcw, ArrowLeft,
+    ClipboardCheck, AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    useGradeOmrBatch,
+    useSubmitOmrGrading,
+    useOmrJobStatus,
+    useOmrJobs,
     MAX_IMAGES,
-    BatchOmrResult,
+    type BatchOmrResult,
+    type OmrJobStatusResponse,
 } from '../api/queries';
 import { type Exam } from '@/entities/exam';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
@@ -112,14 +110,39 @@ function ResultCard({ result, index }: { result: BatchOmrResult; index: number }
 export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) {
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
-    const [gradingResults, setGradingResults] = useState<BatchOmrResult[] | null>(null);
-    const [savedCount, setSavedCount] = useState(0);
-    const [isGradingModalOpen, setIsGradingModalOpen] = useState(false);
-    const [gradingProgress, setGradingProgress] = useState(0);
-    const [gradingImageCount, setGradingImageCount] = useState(0);
+    const [activeJobId, setActiveJobId] = useState<number | null>(null);
+    const [completedJob, setCompletedJob] = useState<OmrJobStatusResponse | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const gradeOmrMutation = useGradeOmrBatch();
+    const submitMutation = useSubmitOmrGrading();
+
+    // Poll for job status
+    const { data: jobStatus } = useOmrJobStatus(
+        selectedExam?.id ?? 0,
+        activeJobId
+    );
+
+    // Check for existing in-progress jobs on mount
+    const { data: existingJobs } = useOmrJobs(selectedExam?.id ?? null);
+
+    // Auto-resume: only re-attach to in-progress jobs
+    useEffect(() => {
+        if (!existingJobs || activeJobId) return;
+        const processingJob = existingJobs.find(
+            (j) => j.status === 'PENDING' || j.status === 'PROCESSING'
+        );
+        if (processingJob) {
+            setActiveJobId(processingJob.jobId);
+        }
+    }, [existingJobs, activeJobId]);
+
+    // Handle job completion
+    useEffect(() => {
+        if (!jobStatus) return;
+        if (jobStatus.status === 'COMPLETED' || jobStatus.status === 'FAILED') {
+            setCompletedJob(jobStatus);
+            setActiveJobId(null);
+        }
+    }, [jobStatus]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -179,55 +202,36 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
     const handleGrade = async () => {
         if (!selectedExam || files.length === 0) return;
 
-        // 모달 열기 및 진행률 초기화
-        setIsGradingModalOpen(true);
-        setGradingProgress(0);
-        setGradingImageCount(files.length);
-
-        // 예상 소요 시간 기반 진행률 시뮬레이션 (이미지당 약 0.025초 = 200장에 5초)
-        const estimatedTimeMs = Math.max(files.length * 25, 1000);
-        const startTime = Date.now();
-
-        progressIntervalRef.current = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min((elapsed / estimatedTimeMs) * 90, 90); // 최대 90%까지
-            setGradingProgress(progress);
-        }, 100);
-
         try {
-            const response = await gradeOmrMutation.mutateAsync({
+            const response = await submitMutation.mutateAsync({
                 examId: selectedExam.id,
                 images: files.map((f) => f.file),
             });
 
-            // 완료 처리
-            if (progressIntervalRef.current) {
-                clearInterval(progressIntervalRef.current);
-            }
-            setGradingProgress(100);
+            // Start polling for job status
+            setActiveJobId(response.jobId);
 
-            // 잠시 후 모달 닫기 및 결과 표시
-            setTimeout(() => {
-                setIsGradingModalOpen(false);
-                files.forEach((f) => URL.revokeObjectURL(f.preview));
-                setFiles([]);
-                setGradingResults(response.results);
-                setSavedCount(response.savedCount);
-            }, 500);
+            // Clear file previews
+            files.forEach((f) => URL.revokeObjectURL(f.preview));
+            setFiles([]);
         } catch {
-            // 에러 시 모달 닫기
-            if (progressIntervalRef.current) {
-                clearInterval(progressIntervalRef.current);
-            }
-            setIsGradingModalOpen(false);
+            // Error handled in mutation
         }
     };
 
     const handleReset = () => {
-        setGradingResults(null);
-        setSavedCount(0);
+        setCompletedJob(null);
+        setActiveJobId(null);
         setFiles([]);
     };
+
+    const isSubmitting = submitMutation.isPending;
+    const isProcessing = !!activeJobId;
+    const progressPercent = jobStatus
+        ? jobStatus.totalImages > 0
+            ? Math.round((jobStatus.processedImages / jobStatus.totalImages) * 100)
+            : 0
+        : 0;
 
     // Empty State
     if (!selectedExam) {
@@ -246,11 +250,13 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
     }
 
     // Results View
-    if (gradingResults) {
-        const successCount = gradingResults.filter((r) => r.success).length;
-        const failCount = gradingResults.length - successCount;
+    if (completedJob) {
+        const results = (completedJob.results ?? []) as BatchOmrResult[];
+        const successCount = completedJob.successCount;
+        const failCount = completedJob.failCount;
+        const savedCount = completedJob.savedCount;
         const avgScore = successCount > 0
-            ? Math.round(gradingResults.filter(r => r.success && r.totalScore != null).reduce((sum, r) => sum + (r.totalScore || 0), 0) / successCount)
+            ? Math.round(results.filter(r => r.success && r.totalScore != null).reduce((sum, r) => sum + (r.totalScore || 0), 0) / successCount)
             : 0;
 
         return (
@@ -266,7 +272,10 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                             <div>
                                 <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">채점 결과</h2>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    {selectedExam.name} - 총 {gradingResults.length}명
+                                    {selectedExam.name} - 총 {completedJob.totalImages}명
+                                    {completedJob.status === 'FAILED' && (
+                                        <span className="ml-2 text-red-500 font-medium">처리 중 오류 발생</span>
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -276,10 +285,39 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-4 mt-5">
+                    {/* Grading Completion Indicator */}
+                    <div className="mt-4">
+                        <div className="flex items-center gap-4">
+                            <div className={cn(
+                                "p-2 rounded-full",
+                                completedJob.status === 'COMPLETED' ? "bg-emerald-100" : "bg-red-100"
+                            )}>
+                                {completedJob.status === 'COMPLETED' ? (
+                                    <ClipboardCheck className="w-5 h-5 text-emerald-600" />
+                                ) : (
+                                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <div className="flex justify-between text-sm font-medium">
+                                    <span>{completedJob.status === 'COMPLETED' ? '채점 완료' : '채점 실패'}</span>
+                                    <span className="text-muted-foreground">
+                                        {completedJob.processedImages} / {completedJob.totalImages}장 · 성공 {successCount} · 저장 {savedCount} · 실패 {failCount}
+                                    </span>
+                                </div>
+                                <Progress
+                                    value={100}
+                                    className="h-2"
+                                    indicatorClassName={completedJob.status === 'COMPLETED' ? "bg-emerald-500" : "bg-red-500"}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-4 mt-4">
                         <div className="bg-gray-50 rounded-xl p-4">
                             <p className="text-sm text-gray-500">총 인원</p>
-                            <p className="text-2xl font-bold text-gray-900">{gradingResults.length}명</p>
+                            <p className="text-2xl font-bold text-gray-900">{completedJob.totalImages}명</p>
                         </div>
                         <div className="bg-emerald-50 rounded-xl p-4">
                             <p className="text-sm text-emerald-600">채점 성공</p>
@@ -302,9 +340,17 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
 
                 <div className="flex-1 overflow-y-auto p-8">
                     <div className="space-y-3 max-w-4xl mx-auto">
-                        {gradingResults.map((result, index) => (
-                            <ResultCard key={result.fileName + index} result={result} index={index} />
-                        ))}
+                        {results.length > 0 ? (
+                            results.map((result, index) => (
+                                <ResultCard key={result.fileName + index} result={result} index={index} />
+                            ))
+                        ) : (
+                            <div className="text-center py-16 text-gray-500">
+                                <ClipboardCheck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                                <p className="font-medium">개별 결과 데이터가 없습니다</p>
+                                <p className="text-sm mt-1">위의 요약 정보를 확인해주세요</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -313,49 +359,6 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
 
     // Upload View
     return (
-        <>
-        <Dialog open={isGradingModalOpen} onOpenChange={() => {}}>
-            <DialogContent
-                className="sm:max-w-md"
-                onPointerDownOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.preventDefault()}
-            >
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-full">
-                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-                        </div>
-                        OMR 채점 중
-                    </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-gray-900">
-                            {gradingImageCount}장
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            답안지를 채점하고 있습니다
-                        </p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Progress value={gradingProgress} className="h-2" />
-                        <div className="flex justify-between text-xs text-gray-500">
-                            <span>처리 중...</span>
-                            <span>{Math.round(gradingProgress)}%</span>
-                        </div>
-                    </div>
-
-                    <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-700">
-                        <p className="font-medium">잠시만 기다려주세요</p>
-                        <p className="text-amber-600 mt-0.5">
-                            채점이 완료될 때까지 이 창을 닫지 마세요.
-                        </p>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-
         <div className="flex-1 flex flex-col h-full bg-gray-50/50">
             <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10">
                 <div className="flex items-center gap-3">
@@ -385,18 +388,56 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                 {files.length > 0 && (
                     <Button
                         onClick={handleGrade}
-                        disabled={gradeOmrMutation.isPending}
+                        disabled={isSubmitting || isProcessing}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 transition-all rounded-full px-6"
                     >
-                        {gradeOmrMutation.isPending ? (
+                        {isSubmitting ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         ) : (
                             <Sparkles className="w-4 h-4 mr-2" />
                         )}
-                        {gradeOmrMutation.isPending ? '채점 중...' : `${files.length}개 채점 시작`}
+                        {isSubmitting ? '제출 중...' : `${files.length}개 채점 시작`}
                     </Button>
                 )}
             </div>
+
+            {/* Grading Progress Indicator */}
+            {(isSubmitting || isProcessing) && (
+                <div className="px-4 tablet:px-8 py-3 bg-white border-b border-gray-200">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 bg-indigo-100 rounded-full">
+                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>{isSubmitting ? '이미지 업로드 중...' : '답안지 채점 중'}</span>
+                                <span className="text-muted-foreground">
+                                    {isSubmitting
+                                        ? '서버로 전송하고 있습니다'
+                                        : jobStatus
+                                            ? `${jobStatus.processedImages} / ${jobStatus.totalImages}장 (${progressPercent}%)`
+                                            : '채점 준비 중...'
+                                    }
+                                </span>
+                            </div>
+                            <Progress
+                                value={isSubmitting ? undefined : progressPercent}
+                                className={cn("h-2", isSubmitting && "animate-pulse")}
+                                indicatorClassName="bg-indigo-600"
+                            />
+                        </div>
+                    </div>
+                    {isSubmitting ? (
+                        <p className="text-xs text-amber-600 mt-2 ml-[52px]">
+                            업로드가 완료될 때까지 페이지를 닫지 마세요
+                        </p>
+                    ) : (
+                        <p className="text-xs text-emerald-600 mt-2 ml-[52px]">
+                            브라우저를 닫아도 채점은 서버에서 계속 진행됩니다
+                        </p>
+                    )}
+                </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-8">
                 <div
@@ -490,6 +531,5 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                 </div>
             </div>
         </div>
-        </>
     );
 }

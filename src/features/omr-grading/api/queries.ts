@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { examClient } from '@/src/shared/api/base';
 import { ENV } from '@/src/shared/config/env';
@@ -62,12 +62,121 @@ interface OmrBatchResponse {
     results: BatchOmrResult[];
 }
 
+interface OmrJobResponse {
+    jobId: number;
+}
+
+interface OmrJobStatusResponse {
+    jobId: number;
+    examId: number;
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+    totalImages: number;
+    processedImages: number;
+    successCount: number;
+    failCount: number;
+    savedCount: number;
+    results: BatchOmrResult[] | null;
+    createdAt: string;
+}
+
 const QUERY_KEYS = {
     all: ['omr-grading'] as const,
+    omrJobs: (examId: number) => ['omr-jobs', examId] as const,
+    omrJob: (examId: number, jobId: number) => ['omr-job', examId, jobId] as const,
 };
 
 /**
- * 배치 OMR 채점 + DB 저장 (exam-svc 경유)
+ * 비동기 배치 OMR 채점 제출 → jobId 반환
+ */
+export function useSubmitOmrGrading() {
+    return useMutation({
+        mutationFn: async ({ examId, images }: OmrGradingRequest) => {
+            if (images.length > MAX_IMAGES) {
+                throw new Error(`이미지는 최대 ${MAX_IMAGES}개까지 가능합니다.`);
+            }
+
+            const formData = new FormData();
+            images.forEach((image) => {
+                formData.append('images', image);
+            });
+
+            const tenantSlug = storage.getTenantSlug();
+            const headers: HeadersInit = {};
+            if (tenantSlug) {
+                headers['X-Tenant-Slug'] = tenantSlug;
+            }
+
+            const response = await fetch(
+                `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/omr/batch`,
+                {
+                    method: 'POST',
+                    body: formData,
+                    headers,
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = 'OMR 채점 제출에 실패했습니다.';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.detail || errorJson.message || errorMessage;
+                } catch {
+                    // ignore parse error
+                }
+                throw new Error(errorMessage);
+            }
+
+            return response.json() as Promise<OmrJobResponse>;
+        },
+        onSuccess: () => {
+            toast.success('채점 요청이 제출되었습니다. 백그라운드에서 처리 중입니다.');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message);
+        },
+    });
+}
+
+/**
+ * OMR Job 상태 polling
+ */
+export function useOmrJobStatus(examId: number, jobId: number | null) {
+    return useQuery({
+        queryKey: QUERY_KEYS.omrJob(examId, jobId ?? 0),
+        queryFn: () =>
+            examClient.get<OmrJobStatusResponse>(
+                `/api/v1/exams/${examId}/omr-jobs/${jobId}`
+            ),
+        enabled: !!jobId,
+        refetchInterval: (query) => {
+            const status = query.state.data?.status;
+            if (status === 'COMPLETED' || status === 'FAILED') {
+                return false;
+            }
+            return 2000;
+        },
+    });
+}
+
+/**
+ * 특정 시험의 OMR Job 목록 조회
+ */
+export function useOmrJobs(examId: number | null) {
+    return useQuery({
+        queryKey: QUERY_KEYS.omrJobs(examId ?? 0),
+        queryFn: () =>
+            examClient.get<OmrJobStatusResponse[]>(
+                `/api/v1/exams/${examId}/omr-jobs`
+            ),
+        enabled: !!examId,
+    });
+}
+
+/**
+ * 배치 OMR 채점 + DB 저장 (동기 방식 - 하위 호환)
+ * @deprecated useSubmitOmrGrading 사용 권장
  */
 export function useGradeOmrBatch() {
     const queryClient = useQueryClient();
@@ -141,4 +250,6 @@ export type {
     OmrGradingResultWithFile,
     BatchOmrResult,
     OmrBatchResponse,
+    OmrJobResponse,
+    OmrJobStatusResponse,
 };
