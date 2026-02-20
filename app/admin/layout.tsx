@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <SidebarProvider>
       <AdminSidebar />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4">
+        <header className="sticky top-0 z-50 flex h-14 items-center gap-4 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1">
             <Header />
