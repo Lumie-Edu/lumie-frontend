@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.variable} ${notoSansKR.variable} font-sans antialiased min-h-screen`}>
         <QueryProvider>
           <AuthModalProvider>
