@@ -10,6 +10,7 @@ export {
   type BulkUpdateInput,
   type CheckInInput,
   type CheckInResponse,
+  type StudentAttendanceStatistics,
   attendanceSessionSchema,
   attendanceRecordSchema,
   studentAttendanceRecordSchema,
@@ -21,6 +22,7 @@ export {
   bulkUpdateSchema,
   checkInSchema,
   checkInResponseSchema,
+  studentAttendanceStatisticsSchema,
 } from './model/schema';
 
 export {
@@ -35,4 +37,5 @@ export {
   useBulkUpdateAttendance,
   useCheckIn,
   useStudentAttendanceRecords,
+  useStudentAttendanceStatistics,
 } from './api/queries';

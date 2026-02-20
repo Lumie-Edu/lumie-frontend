@@ -95,3 +95,15 @@ export const checkInResponseSchema = z.object({
 });
 
 export type CheckInResponse = z.infer<typeof checkInResponseSchema>;
+
+export const studentAttendanceStatisticsSchema = z.object({
+  studentId: z.number(),
+  totalSessions: z.number(),
+  presentCount: z.number(),
+  absentCount: z.number(),
+  lateCount: z.number(),
+  excusedCount: z.number(),
+  attendanceRate: z.number(),
+});
+
+export type StudentAttendanceStatistics = z.infer<typeof studentAttendanceStatisticsSchema>;

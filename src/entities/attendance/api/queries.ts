@@ -5,6 +5,7 @@ import {
   AttendanceSession,
   AttendanceRecord,
   StudentAttendanceRecord,
+  StudentAttendanceStatistics,
   CreateSessionInput,
   UpdateStatusInput,
   BulkUpdateInput,
@@ -26,6 +27,7 @@ const QUERY_KEYS = {
   session: (id: number) => [...QUERY_KEYS.all, 'session', id] as const,
   records: (sessionId: number) => [...QUERY_KEYS.all, 'records', sessionId] as const,
   studentRecords: (studentId: number) => [...QUERY_KEYS.all, 'student-records', studentId] as const,
+  studentStatistics: (studentId: number) => [...QUERY_KEYS.all, 'student-statistics', studentId] as const,
 };
 
 export function useAttendanceSessions(params?: SessionQueryParams) {
@@ -166,6 +168,17 @@ export function useStudentAttendanceRecords(studentId: number) {
     queryFn: () =>
       attendanceClient.get<StudentAttendanceRecord[]>(
         `/api/v1/attendance/students/${studentId}/records`
+      ),
+    enabled: studentId > 0,
+  });
+}
+
+export function useStudentAttendanceStatistics(studentId: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.studentStatistics(studentId),
+    queryFn: () =>
+      attendanceClient.get<StudentAttendanceStatistics>(
+        `/api/v1/attendance/students/${studentId}/statistics`
       ),
     enabled: studentId > 0,
   });

@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import { type Student, useUpdateStudent } from '@/entities/student';
+import { useAcademies } from '@/entities/academy';
+import { useStudentAttendanceStatistics } from '@/entities/attendance';
+import { EditStudentModal } from '@/features/student-management/edit-student';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Save, X } from 'lucide-react';
+import { User, Pencil, Save, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { formatPhoneNumber, formatDate } from '@/src/shared/lib/format';
 
 interface StudentInfoTabProps {
@@ -21,9 +25,13 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 }
 
 export function StudentInfoTab({ student }: StudentInfoTabProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isEditingMemo, setIsEditingMemo] = useState(false);
   const [memoValue, setMemoValue] = useState(student.studentMemo ?? '');
   const { mutate: updateStudent, isPending } = useUpdateStudent(student.id);
+  const { data: academiesData } = useAcademies();
+
+  const { data: statistics } = useStudentAttendanceStatistics(student.id);
 
   const currentYear = new Date().getFullYear();
   const age = student.studentBirthYear
@@ -47,12 +55,32 @@ export function StudentInfoTab({ student }: StudentInfoTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* 프로필 정보 */}
       <div className="bg-white rounded-xl border p-6">
-        <h3 className="text-lg font-semibold mb-4">프로필 정보</h3>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-md shrink-0">
+            <User className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold">{student.name}</h2>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setIsEditOpen(true)}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {student.isActive ? (
+              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 mt-0.5">
+                재학
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 mt-0.5">
+                퇴원
+              </Badge>
+            )}
+          </div>
+        </div>
         <dl className="space-y-0">
-          <InfoRow label="이름" value={student.name} />
           <InfoRow label="아이디" value={student.userLoginId} />
           <InfoRow label="연락처" value={formatPhoneNumber(student.phone)} />
           <InfoRow label="학부모 연락처" value={formatPhoneNumber(student.parentPhone)} />
@@ -65,6 +93,7 @@ export function StudentInfoTab({ student }: StudentInfoTabProps) {
                 : null
             }
           />
+          <InfoRow label="출석률" value={statistics ? `${statistics.attendanceRate}%` : null} />
           <InfoRow label="소속 학원" value={student.academyName} />
           <InfoRow label="등록일" value={formatDate(student.createdAt)} />
         </dl>
@@ -116,6 +145,13 @@ export function StudentInfoTab({ student }: StudentInfoTabProps) {
           </p>
         )}
       </div>
+
+      <EditStudentModal
+        student={student}
+        academies={academiesData?.content ?? []}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+      />
     </div>
   );
 }
