@@ -30,7 +30,6 @@ import {
   Calendar,
   Sparkles,
   Globe,
-  Table,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -111,7 +110,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: null, label: '비용 수납', icon: CreditCard },
       { href: '/admin/textbooks', label: '교재 관리', icon: BookOpen },
-      { href: '/admin/spreadsheets', label: '스프레드시트', icon: Table },
+      { href: '/admin/spreadsheets', label: '스프레드시트', icon: FileText },
       { href: '/admin/academies', label: '단과 관리', icon: LayoutGrid },
       { href: '/admin/reviews', label: '리뷰 관리', icon: Star },
     ],
