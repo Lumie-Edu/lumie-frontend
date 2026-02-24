@@ -1,12 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { fileClient } from '@/src/shared/api/base';
-import {
-  FileMetadata,
-  PresignedUploadRequest,
-  PresignedUploadResponse,
-  PresignedDownloadResponse,
-} from '../model/schema';
+import { FileMetadata } from '../model/schema';
+import { ENV } from '@/src/shared/config/env';
+import { storage } from '@/src/shared/lib/storage';
 
 const QUERY_KEYS = {
   all: ['textbook-files'] as const,
@@ -30,48 +27,87 @@ export function useTextbookFile(id: string) {
   });
 }
 
-export function usePresignedUpload() {
+export function useUploadFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: PresignedUploadRequest) => {
-      const response = await fileClient.post<PresignedUploadResponse>(
-        '/api/v1/files/presigned-upload',
-        data
+    mutationFn: async ({
+      file,
+      entityType,
+      entityId,
+    }: {
+      file: File;
+      entityType: string;
+      entityId?: number;
+    }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('entityType', entityType);
+      if (entityId !== undefined) {
+        formData.append('entityId', entityId.toString());
+      }
+
+      const headers: Record<string, string> = {};
+      const slug = storage.getTenantSlug();
+      if (slug) {
+        headers['X-Tenant-Slug'] = slug;
+      }
+
+      const response = await fetch(
+        `${ENV.FILE_SERVICE_URL}/api/v1/files/upload`,
+        {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+          headers,
+        }
       );
-      return response;
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
+
+      return response.json() as Promise<FileMetadata>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
+      toast.success('파일이 업로드되었습니다.');
     },
   });
 }
 
-export function useRegisterUpload() {
-  const queryClient = useQueryClient();
-
+export function useDownloadFile() {
   return useMutation({
-    mutationFn: async (fileId: string) => {
-      const response = await fileClient.post<FileMetadata>('/api/v1/files', {
-        fileId,
-      });
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
-      toast.success('파일이 등록되었습니다.');
-    },
-  });
-}
+    mutationFn: async ({ fileId, filename }: { fileId: string; filename: string }) => {
+      const headers: Record<string, string> = {};
+      const slug = storage.getTenantSlug();
+      if (slug) {
+        headers['X-Tenant-Slug'] = slug;
+      }
 
-export function usePresignedDownload() {
-  return useMutation({
-    mutationFn: async (fileId: string) => {
-      const response = await fileClient.post<PresignedDownloadResponse>(
-        '/api/v1/files/presigned-download',
-        { fileId }
+      const response = await fetch(
+        `${ENV.FILE_SERVICE_URL}/api/v1/files/${fileId}/download`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers,
+        }
       );
-      return response;
+
+      if (!response.ok) {
+        throw new Error('다운로드에 실패했습니다.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     },
   });
 }
@@ -86,18 +122,4 @@ export function useDeleteTextbookFile() {
       toast.success('파일이 삭제되었습니다.');
     },
   });
-}
-
-export async function uploadFileToS3(uploadUrl: string, file: File): Promise<void> {
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: {
-      'Content-Type': file.type,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('파일 업로드에 실패했습니다.');
-  }
 }

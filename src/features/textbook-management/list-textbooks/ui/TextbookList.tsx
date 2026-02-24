@@ -3,11 +3,9 @@
 import { useState, useRef } from 'react';
 import {
   useTextbookFiles,
-  usePresignedUpload,
-  useRegisterUpload,
-  usePresignedDownload,
+  useUploadFile,
+  useDownloadFile,
   useDeleteTextbookFile,
-  uploadFileToS3,
 } from '@/entities/textbook';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -64,9 +62,8 @@ export function TextbookList() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: files, isLoading, error } = useTextbookFiles();
-  const { mutateAsync: getPresignedUpload } = usePresignedUpload();
-  const { mutateAsync: registerUpload } = useRegisterUpload();
-  const { mutateAsync: getPresignedDownload } = usePresignedDownload();
+  const { mutateAsync: uploadFile } = useUploadFile();
+  const { mutateAsync: downloadFile } = useDownloadFile();
   const { mutate: deleteFile, isPending: isDeleting } = useDeleteTextbookFile();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,15 +96,10 @@ export function TextbookList() {
 
     setIsUploading(true);
     try {
-      const presignedResponse = await getPresignedUpload({
+      await uploadFile({
+        file,
         entityType: 'TEXTBOOK',
-        filename: file.name,
-        contentType: file.type,
-        fileSize: file.size,
       });
-
-      await uploadFileToS3(presignedResponse.uploadUrl, file);
-      await registerUpload(presignedResponse.fileId);
       toast.success('파일이 성공적으로 업로드되었습니다.');
     } catch (error) {
       console.error('Upload failed:', error);
@@ -123,14 +115,7 @@ export function TextbookList() {
   const handleDownload = async (fileId: string, filename: string) => {
     setDownloadingId(fileId);
     try {
-      const response = await getPresignedDownload(fileId);
-      const link = document.createElement('a');
-      link.href = response.downloadUrl;
-      link.download = filename;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await downloadFile({ fileId, filename });
     } catch (error) {
       console.error('Download failed:', error);
       toast.error('다운로드에 실패했습니다.');
