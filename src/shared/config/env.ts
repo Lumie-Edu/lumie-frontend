@@ -21,4 +21,6 @@ export const ENV = {
     process.env.NEXT_PUBLIC_ATTENDANCE_SERVICE_URL || '/api/attendance',
   ADMIN_SERVICE_URL:
     process.env.NEXT_PUBLIC_ADMIN_SERVICE_URL || '/api/admin',
+  AI_SERVICE_URL:
+    process.env.NEXT_PUBLIC_AI_SERVICE_URL || '/api/ai',
 } as const;

@@ -118,7 +118,7 @@ const navGroups: NavGroup[] = [
 ];
 
 const singleMenuItems: NavItem[] = [
-  { href: null, label: 'AI', icon: Sparkles },
+  { href: '/admin/ai', label: 'AI', icon: Sparkles },
   { href: null, label: '홈페이지', icon: Globe },
 ];
 
@@ -162,6 +162,18 @@ export function AdminSidebar() {
                 }
 
                 if (isAI) {
+                  if (item.href) {
+                    return (
+                      <SidebarMenuItem key={item.label}>
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="text-base font-semibold bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white hover:from-violet-700 hover:via-fuchsia-600 hover:to-orange-500">
+                          <Link href={item.href}>
+                            <Icon className="!h-5 !w-5" />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  }
                   return (
                     <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton tooltip={item.label} className="text-base font-semibold bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 text-white cursor-not-allowed">

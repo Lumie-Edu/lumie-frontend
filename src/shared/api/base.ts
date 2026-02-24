@@ -176,3 +176,4 @@ export const contentClient = createServiceClient(ENV.CONTENT_SERVICE_URL);
 export const fileClient = createServiceClient(ENV.FILE_SERVICE_URL);
 export const attendanceClient = createServiceClient(ENV.ATTENDANCE_SERVICE_URL);
 export const adminClient = createServiceClient(ENV.ADMIN_SERVICE_URL);
+export const aiClient = createServiceClient(ENV.AI_SERVICE_URL);
