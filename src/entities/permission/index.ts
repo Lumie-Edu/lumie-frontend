@@ -11,4 +11,6 @@ export {
   usePermissionsByCategory,
   usePositionPermissions,
   useSetPositionPermissions,
+  useAdminPermissions,
+  useSetAdminPermissions,
 } from './api/queries';

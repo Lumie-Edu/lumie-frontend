@@ -14,6 +14,8 @@ const QUERY_KEYS = {
   categories: () => [...QUERY_KEYS.all, 'categories'] as const,
   positionPermissions: (positionId: number) =>
     [...QUERY_KEYS.all, 'position', positionId] as const,
+  adminPermissions: (adminId: number) =>
+    [...QUERY_KEYS.all, 'admin', adminId] as const,
 };
 
 export function usePermissions() {
@@ -48,6 +50,33 @@ export function usePositionPermissions(positionId: number) {
         `/api/v1/positions/${positionId}/permissions`
       ),
     enabled: positionId > 0,
+  });
+}
+
+export function useAdminPermissions(adminId: number) {
+  return useQuery({
+    queryKey: QUERY_KEYS.adminPermissions(adminId),
+    queryFn: () =>
+      adminClient.get<PositionPermissionEntry[]>(
+        `/api/v1/admins/${adminId}/permissions`
+      ),
+    enabled: adminId > 0,
+  });
+}
+
+export function useSetAdminPermissions(adminId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (permissions: Record<string, AccessLevel>) =>
+      adminClient.put<void>(
+        `/api/v1/admins/${adminId}/permissions`,
+        { permissions }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
+      toast.success('권한이 설정되었습니다.');
+    },
   });
 }
 
