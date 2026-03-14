@@ -82,7 +82,7 @@ const PERMISSION_ICONS: Record<string, LucideIcon> = {
 const ACCESS_LEVELS: { value: AccessLevel; label: string }[] = [
   { value: 'NONE', label: '금지' },
   { value: 'READ', label: '읽기' },
-  { value: 'WRITE', label: '전체' },
+  { value: 'WRITE', label: '쓰기' },
 ];
 
 const LEVEL_STYLES: Record<AccessLevel, { card: string; icon: string; segment: string }> = {
@@ -135,17 +135,6 @@ export function AdminPermissionEditor({ adminId }: AdminPermissionEditorProps) {
 
   const handleAccessChange = (code: string, level: AccessLevel) => {
     setPermissionMap((prev) => ({ ...prev, [code]: level }));
-    setIsDirty(true);
-  };
-
-  const handleCategoryBulk = (category: { permissions: { code: string }[] }, level: AccessLevel) => {
-    setPermissionMap((prev) => {
-      const next = { ...prev };
-      category.permissions.forEach((p) => {
-        next[p.code] = level;
-      });
-      return next;
-    });
     setIsDirty(true);
   };
 
@@ -207,6 +196,12 @@ export function AdminPermissionEditor({ adminId }: AdminPermissionEditorProps) {
             {totalStats.enabled}/{totalStats.total} 활성
           </Badge>
         </div>
+        {isDirty && (
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? '저장 중...' : '변경사항 저장'}
+          </Button>
+        )}
       </div>
 
       {/* Permission Cards */}
@@ -231,21 +226,9 @@ export function AdminPermissionEditor({ adminId }: AdminPermissionEditorProps) {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-0.5">
-                  {ACCESS_LEVELS.map((level) => (
-                    <button
-                      key={level.value}
-                      type="button"
-                      onClick={() => handleCategoryBulk(cat, level.value)}
-                      className="px-2 py-0.5 text-xs rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                    >
-                      전체 {level.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 smalltablet:grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 smalltablet:grid-cols-4 lg:grid-cols-5 gap-2">
                 {cat.permissions.map((perm) => {
                   const Icon = PERMISSION_ICONS[perm.code] ?? Shield;
                   const level = permissionMap[perm.code] ?? 'NONE';
@@ -255,15 +238,13 @@ export function AdminPermissionEditor({ adminId }: AdminPermissionEditorProps) {
                     <div
                       key={perm.code}
                       className={cn(
-                        'rounded-lg border-2 px-3 py-2.5 flex items-center gap-3 transition-all duration-200',
+                        'rounded-lg border-2 p-3 flex flex-col items-center gap-2 transition-all duration-200 justify-center',
                         styles.card
                       )}
                     >
-                      <Icon className={cn('h-5 w-5 shrink-0', styles.icon)} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-tight truncate">{perm.name}</p>
-                      </div>
-                      <div className="flex gap-0.5 rounded-md bg-muted/50 p-0.5 shrink-0">
+                      <Icon className={cn('h-6 w-6', styles.icon)} />
+                      <p className="text-xs font-medium text-center leading-tight">{perm.name}</p>
+                      <div className="flex gap-0.5 rounded-md bg-muted/50 p-0.5">
                         {ACCESS_LEVELS.map((opt) => (
                           <button
                             key={opt.value}
@@ -287,15 +268,6 @@ export function AdminPermissionEditor({ adminId }: AdminPermissionEditorProps) {
         })}
       </div>
 
-      {/* Sticky save bar */}
-      {isDirty && (
-        <div className="sticky bottom-0 pt-3 -mx-6 px-6 -mb-6 pb-4 bg-gradient-to-t from-white via-white to-white/80">
-          <Button className="w-full" onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? '저장 중...' : '변경사항 저장'}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
