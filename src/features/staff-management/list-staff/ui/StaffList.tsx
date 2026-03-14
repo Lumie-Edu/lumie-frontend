@@ -58,7 +58,7 @@ import {
 import { CreateStaffForm } from '../../create-staff/ui/CreateStaffForm';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
 
-type SortField = 'name' | 'hireDate' | 'createdAt';
+type SortField = 'name' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
 const PAGE_SIZE = 20;
@@ -507,7 +507,6 @@ export function StaffList() {
                   <TableHead className="text-center hidden tablet:table-cell">전화번호</TableHead>
                   <TableHead className="text-center hidden tablet:table-cell">이메일</TableHead>
                   <TableHead className="text-center hidden desktop:table-cell">상태</TableHead>
-                  <SortableHeader field="hireDate" label="입사일" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} className="hidden desktop:table-cell" />
                   <TableHead className="w-[8%]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -534,7 +533,6 @@ export function StaffList() {
                       <TableCell className="text-center hidden desktop:table-cell">
                         <StatusBadge status={emp.employmentStatus || 'ACTIVE'} />
                       </TableCell>
-                      <TableCell className="text-center hidden desktop:table-cell">{emp.hireDate || '-'}</TableCell>
                       <TableCell className="text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

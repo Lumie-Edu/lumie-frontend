@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { useUser } from '@/entities/session';
 import { useLogout } from '@/features/auth';
@@ -27,16 +28,18 @@ export function Header() {
             {items.map((item, index) => {
               const isLast = index === items.length - 1;
               return (
-                <BreadcrumbItem key={index}>
+                <React.Fragment key={index}>
                   {index > 0 && <BreadcrumbSeparator />}
-                  {isLast || !item.href ? (
-                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink asChild>
-                      <Link href={item.href}>{item.label}</Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
+                  <BreadcrumbItem>
+                    {isLast || !item.href ? (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link href={item.href}>{item.label}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
               );
             })}
           </BreadcrumbList>
