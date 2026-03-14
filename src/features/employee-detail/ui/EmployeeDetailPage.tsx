@@ -5,10 +5,8 @@ import { useEmployee } from '@/entities/employee';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/src/shared/lib/breadcrumb';
-import { DetailLayout } from '@/src/shared/ui/DetailLayout';
 import { EmployeeInfoSection } from './EmployeeInfoSection';
-import { AttendanceTab } from './AttendanceTab';
-import { ContractTab } from './ContractTab';
+import { AdminPermissionEditor } from '@/features/permission-management/ui/AdminPermissionEditor';
 
 interface EmployeeDetailPageProps {
   employeeId: number;
@@ -50,13 +48,13 @@ export function EmployeeDetailPage({ employeeId }: EmployeeDetailPageProps) {
   }
 
   return (
-    <DetailLayout
-      sidebar={<EmployeeInfoSection employee={employee} />}
-      tabs={[
-        { value: 'attendance', label: '출퇴근', content: <AttendanceTab adminId={employee.id} /> },
-        { value: 'contract', label: '계약', content: <ContractTab employee={employee} /> },
-      ]}
-      defaultTab="attendance"
-    />
+    <div className="flex flex-col tablet:flex-row gap-6">
+      <aside className="tablet:w-96 tablet:shrink-0 flex flex-col">
+        <EmployeeInfoSection employee={employee} />
+      </aside>
+      <div className="flex-1 min-w-0">
+        <AdminPermissionEditor adminId={employee.id} />
+      </div>
+    </div>
   );
 }

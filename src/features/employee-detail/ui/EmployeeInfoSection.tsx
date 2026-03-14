@@ -9,7 +9,6 @@ import {
   updateEmployeeSchema,
   useUpdateEmployee,
   EmploymentStatusLabel,
-  ContractTypeLabel,
 } from '@/entities/employee';
 import { useActivePositions } from '@/entities/position';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { User, Pencil, Save, X } from 'lucide-react';
-import { formatPhoneNumber, formatDate } from '@/src/shared/lib/format';
+import { formatPhoneNumber } from '@/src/shared/lib/format';
 
 interface EmployeeInfoSectionProps {
   employee: Employee;
@@ -69,7 +68,7 @@ export function EmployeeInfoSection({ employee }: EmployeeInfoSectionProps) {
 
   const handleSaveMemo = () => {
     updateEmployee(
-      { adminMemo: memoValue },
+      { userLoginId: employee.userLoginId, adminMemo: memoValue },
       { onSuccess: () => setIsEditingMemo(false) },
     );
   };
@@ -80,7 +79,7 @@ export function EmployeeInfoSection({ employee }: EmployeeInfoSectionProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 h-full">
       {/* 프로필 정보 */}
       <div className="bg-white rounded-xl border p-6">
         <div className="flex items-center gap-3 mb-5">
@@ -103,16 +102,11 @@ export function EmployeeInfoSection({ employee }: EmployeeInfoSectionProps) {
           <InfoRow label="이메일" value={employee.email} />
           <InfoRow label="직책" value={employee.position?.name} />
           <InfoRow label="학원" value={employee.academies?.map((a) => a.name).join(', ')} />
-          <InfoRow label="입사일" value={employee.hireDate ? formatDate(employee.hireDate) : undefined} />
-          <InfoRow
-            label="계약 유형"
-            value={employee.contractType ? ContractTypeLabel[employee.contractType as keyof typeof ContractTypeLabel] : undefined}
-          />
         </dl>
       </div>
 
       {/* 메모 */}
-      <div className="bg-white rounded-xl border p-6">
+      <div className="bg-white rounded-xl border p-6 flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">메모</h3>
           {!isEditingMemo && (
@@ -152,7 +146,7 @@ export function EmployeeInfoSection({ employee }: EmployeeInfoSectionProps) {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap min-h-[60px]">
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-1">
             {employee.adminMemo || '메모가 없습니다.'}
           </p>
         )}
@@ -185,12 +179,11 @@ function EditEmployeeModal({ employee, open, onOpenChange }: EditEmployeeModalPr
   } = useForm<UpdateEmployeeInput>({
     resolver: zodResolver(updateEmployeeSchema),
     defaultValues: {
+      userLoginId: employee.userLoginId,
       name: employee.name,
       phone: employee.phone || '',
       email: employee.email || '',
       positionId: employee.position?.id ?? null,
-      hireDate: employee.hireDate || '',
-      contractType: employee.contractType || '',
       adminMemo: employee.adminMemo || '',
     },
   });
@@ -242,31 +235,6 @@ function EditEmployeeModal({ employee, open, onOpenChange }: EditEmployeeModalPr
                   <SelectContent>
                     {positions?.map((p) => (
                       <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>입사일</Label>
-            <Input type="date" {...register('hireDate')} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>계약 유형</Label>
-            <Controller
-              name="contractType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="계약 유형 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ContractTypeLabel).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

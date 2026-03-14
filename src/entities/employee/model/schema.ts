@@ -11,22 +11,6 @@ const positionInfoSchema = z.object({
   name: z.string(),
 });
 
-export const ContractType = {
-  FULL_TIME: 'FULL_TIME',
-  PART_TIME: 'PART_TIME',
-  CONTRACT: 'CONTRACT',
-  INTERN: 'INTERN',
-} as const;
-
-export type ContractType = (typeof ContractType)[keyof typeof ContractType];
-
-export const ContractTypeLabel: Record<ContractType, string> = {
-  FULL_TIME: '정규직',
-  PART_TIME: '파트타임',
-  CONTRACT: '계약직',
-  INTERN: '인턴',
-};
-
 export const EmploymentStatus = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
@@ -52,10 +36,6 @@ export const employeeSchema = z.object({
   email: z.string().nullable().optional(),
   academies: z.array(academyInfoSchema).optional(),
   position: positionInfoSchema.nullable().optional(),
-  hireDate: z.string().nullable().optional(),
-  contractStartDate: z.string().nullable().optional(),
-  contractEndDate: z.string().nullable().optional(),
-  contractType: z.string().nullable().optional(),
   employmentStatus: z.string().optional(),
   adminMemo: z.string().nullable().optional(),
   isActive: z.boolean(),
@@ -78,25 +58,18 @@ export const createEmployeeSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다.').optional().or(z.literal('')),
   academyIds: z.array(z.number()).optional(),
   positionId: z.number().nullable().optional(),
-  hireDate: z.string().optional(),
-  contractStartDate: z.string().optional(),
-  contractEndDate: z.string().optional(),
-  contractType: z.string().optional(),
   adminMemo: z.string().optional(),
 });
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
 
 export const updateEmployeeSchema = z.object({
+  userLoginId: z.string().min(4, '아이디는 최소 4자 이상이어야 합니다.'),
   name: z.string().min(2, '이름은 최소 2자 이상이어야 합니다.').max(100, '이름은 100자를 초과할 수 없습니다.').optional(),
   phone: phoneSchema,
   email: z.string().email('올바른 이메일 형식이 아닙니다.').optional().or(z.literal('')),
   academyIds: z.array(z.number()).optional(),
   positionId: z.number().nullable().optional(),
-  hireDate: z.string().optional(),
-  contractStartDate: z.string().optional(),
-  contractEndDate: z.string().optional(),
-  contractType: z.string().optional(),
   employmentStatus: z.string().optional(),
   adminMemo: z.string().optional(),
 });

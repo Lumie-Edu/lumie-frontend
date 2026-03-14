@@ -3,12 +3,10 @@ export {
   type CreateEmployeeInput,
   type UpdateEmployeeInput,
   type EmployeeFilter,
-  type ContractType,
   type EmploymentStatus,
   employeeSchema,
   createEmployeeSchema,
   updateEmployeeSchema,
-  ContractTypeLabel,
   EmploymentStatusLabel,
 } from './model/schema';
 
