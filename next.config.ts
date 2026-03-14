@@ -10,10 +10,6 @@ const nextConfig: NextConfig = {
     if (process.env.NODE_ENV === 'development') {
       return [
         {
-          source: '/api/:path*',
-          destination: `${API_BASE}/api/:path*`,
-        },
-        {
           source: '/ws/:path*',
           destination: `${API_BASE}/ws/:path*`,
         },

@@ -32,7 +32,8 @@ export function middleware(request: NextRequest) {
 
   if (sessionCookie?.value) {
     try {
-      const parsed = JSON.parse(sessionCookie.value);
+      const decoded = decodeURIComponent(sessionCookie.value);
+      const parsed = JSON.parse(decoded);
       session = parsed?.state ?? null;
     } catch {
       // Invalid session cookie
