@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ArrowLeft, Download, CheckCircle, XCircle } from 'lucide-react';
+import { OmrImageButton } from '@/features/omr-grading';
 
 interface ExamDetailViewProps {
   studentId: number;
@@ -103,15 +104,18 @@ export function ExamDetailView({ studentId, resultId, examId, onBack }: ExamDeta
           <ArrowLeft className="h-4 w-4 mr-1" />
           목록으로
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => generateReport({ studentId, examId })}
-          disabled={isGenerating}
-        >
-          <Download className="h-4 w-4 mr-1" />
-          리포트
-        </Button>
+        <div className="flex items-center gap-2">
+          <OmrImageButton examId={examId} resultId={resultId} variant="outline" label="OMR 보기" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => generateReport({ studentId, examId })}
+            disabled={isGenerating}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            리포트
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col tablet:flex-row gap-6">

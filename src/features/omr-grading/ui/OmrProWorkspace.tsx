@@ -10,6 +10,13 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
+import {
     useSubmitOmrGrading,
     useOmrJobStatus,
     useOmrJobs,
@@ -17,6 +24,7 @@ import {
     type BatchOmrResult,
     type OmrJobStatusResponse,
 } from '../api/queries';
+import { useOmrJobTracker } from '../providers/OmrJobTrackerProvider';
 import { type Exam } from '@/entities/exam';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
 
@@ -108,41 +116,61 @@ function ResultCard({ result, index }: { result: BatchOmrResult; index: number }
 }
 
 export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) {
+    const { trackJob, clearJob, dismissNotification } = useOmrJobTracker();
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
-    const [activeJobId, setActiveJobId] = useState<number | null>(null);
+    const [localJobId, setLocalJobId] = useState<number | null>(null);
     const [completedJob, setCompletedJob] = useState<OmrJobStatusResponse | null>(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadingCount, setUploadingCount] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const submitMutation = useSubmitOmrGrading();
+    const submitMutation = useSubmitOmrGrading({
+        onUploadProgress: setUploadProgress,
+    });
 
-    // Poll for job status
+    const isSubmitting = submitMutation.isPending;
+
+    // Prevent page close during upload
+    useEffect(() => {
+        if (!isSubmitting) return;
+        const handler = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [isSubmitting]);
+
+    // Poll for job status (local polling for in-page progress display)
     const { data: jobStatus } = useOmrJobStatus(
         selectedExam?.id ?? 0,
-        activeJobId
+        localJobId
     );
 
     // Check for existing in-progress jobs on mount
     const { data: existingJobs } = useOmrJobs(selectedExam?.id ?? null);
 
-    // Auto-resume: only re-attach to in-progress jobs
+    // Auto-resume: re-attach to in-progress jobs for local progress display
     useEffect(() => {
-        if (!existingJobs || activeJobId) return;
+        if (!existingJobs || localJobId) return;
         const processingJob = existingJobs.find(
             (j) => j.status === 'PENDING' || j.status === 'PROCESSING'
         );
-        if (processingJob) {
-            setActiveJobId(processingJob.jobId);
+        if (processingJob && selectedExam) {
+            setLocalJobId(processingJob.jobId);
+            trackJob(processingJob.jobId, selectedExam.id, selectedExam.name);
         }
-    }, [existingJobs, activeJobId]);
+    }, [existingJobs, localJobId, selectedExam, trackJob]);
 
-    // Handle job completion
+    // Handle job completion (local result display)
     useEffect(() => {
         if (!jobStatus) return;
         if (jobStatus.status === 'COMPLETED' || jobStatus.status === 'FAILED') {
             setCompletedJob(jobStatus);
-            setActiveJobId(null);
+            setLocalJobId(null);
+            clearJob();
+            dismissNotification();
         }
-    }, [jobStatus]);
+    }, [jobStatus, clearJob, dismissNotification]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -202,14 +230,17 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
     const handleGrade = async () => {
         if (!selectedExam || files.length === 0) return;
 
+        setUploadProgress(0);
+        setUploadingCount(files.length);
         try {
             const response = await submitMutation.mutateAsync({
                 examId: selectedExam.id,
                 images: files.map((f) => f.file),
             });
 
-            // Start polling for job status
-            setActiveJobId(response.jobId);
+            // Start polling for job status (local + global tracker)
+            setLocalJobId(response.jobId);
+            trackJob(response.jobId, selectedExam.id, selectedExam.name);
 
             // Clear file previews
             files.forEach((f) => URL.revokeObjectURL(f.preview));
@@ -221,12 +252,12 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
 
     const handleReset = () => {
         setCompletedJob(null);
-        setActiveJobId(null);
+        setLocalJobId(null);
+        clearJob();
         setFiles([]);
     };
 
-    const isSubmitting = submitMutation.isPending;
-    const isProcessing = !!activeJobId;
+    const isProcessing = !!localJobId;
     const progressPercent = jobStatus
         ? jobStatus.totalImages > 0
             ? Math.round((jobStatus.processedImages / jobStatus.totalImages) * 100)
@@ -401,8 +432,36 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                 )}
             </div>
 
-            {/* Grading Progress Indicator */}
-            {(isSubmitting || isProcessing) && (
+            {/* Upload Progress Modal */}
+            <Dialog open={isSubmitting}>
+                <DialogContent showCloseButton={false} onPointerDownOutside={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 rounded-full">
+                                <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                            </div>
+                            이미지 업로드 중...
+                        </DialogTitle>
+                        <DialogDescription>
+                            서버로 답안지 이미지를 전송하고 있습니다. 업로드가 완료될 때까지 페이지를 닫거나 이동하지 마세요.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm font-medium">
+                            <span>{uploadingCount}개 이미지 전송 중</span>
+                            <span className="text-indigo-600">{uploadProgress}%</span>
+                        </div>
+                        <Progress value={uploadProgress} className="h-3" indicatorClassName="bg-indigo-600" />
+                        <p className="text-xs text-amber-600 flex items-center gap-1.5 mt-3">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            업로드 중 페이지를 벗어나면 채점이 시작되지 않습니다
+                        </p>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Grading Progress Indicator (server-side processing) */}
+            {isProcessing && (
                 <div className="px-4 tablet:px-8 py-3 bg-white border-b border-gray-200">
                     <div className="flex items-center gap-4">
                         <div className="p-2 bg-indigo-100 rounded-full">
@@ -410,32 +469,24 @@ export function OmrProWorkspace({ selectedExam, onBack }: OmrProWorkspaceProps) 
                         </div>
                         <div className="flex-1 space-y-1">
                             <div className="flex justify-between text-sm font-medium">
-                                <span>{isSubmitting ? '이미지 업로드 중...' : '답안지 채점 중'}</span>
+                                <span>답안지 채점 중</span>
                                 <span className="text-muted-foreground">
-                                    {isSubmitting
-                                        ? '서버로 전송하고 있습니다'
-                                        : jobStatus
-                                            ? `${jobStatus.processedImages} / ${jobStatus.totalImages}장 (${progressPercent}%)`
-                                            : '채점 준비 중...'
+                                    {jobStatus
+                                        ? `${jobStatus.processedImages} / ${jobStatus.totalImages}장 (${progressPercent}%)`
+                                        : '채점 준비 중...'
                                     }
                                 </span>
                             </div>
                             <Progress
-                                value={isSubmitting ? undefined : progressPercent}
-                                className={cn("h-2", isSubmitting && "animate-pulse")}
+                                value={progressPercent}
+                                className="h-2"
                                 indicatorClassName="bg-indigo-600"
                             />
                         </div>
                     </div>
-                    {isSubmitting ? (
-                        <p className="text-xs text-amber-600 mt-2 ml-[52px]">
-                            업로드가 완료될 때까지 페이지를 닫지 마세요
-                        </p>
-                    ) : (
-                        <p className="text-xs text-emerald-600 mt-2 ml-[52px]">
-                            브라우저를 닫아도 채점은 서버에서 계속 진행됩니다
-                        </p>
-                    )}
+                    <p className="text-xs text-emerald-600 mt-2 ml-[52px]">
+                        브라우저를 닫아도 채점은 서버에서 계속 진행됩니다
+                    </p>
                 </div>
             )}
 

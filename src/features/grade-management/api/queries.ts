@@ -25,6 +25,7 @@ export interface StudentGrade {
     examCategory: 'GRADED' | 'PASS_FAIL';
     isPassed: boolean;
     submittedAt: string;
+    resultId: number;
     answers?: Record<string, string>;
 }
 

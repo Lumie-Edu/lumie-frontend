@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/src/shared/ui/Card';
 import { useState } from 'react';
 import { CheckCircle, XCircle, Plus, FileText } from 'lucide-react';
 import { ReportButton } from './ReportButton';
+import { OmrImageButton } from '@/features/omr-grading';
 
 interface ExamResultsViewProps {
   examId: number;
@@ -112,6 +113,7 @@ export function ExamResultsView({ examId, totalScore, passingScore }: ExamResult
                 <th className="px-4 py-3 text-left">점수</th>
                 <th className="px-4 py-3 text-left">합격 여부</th>
                 <th className="px-4 py-3 text-left">제출일</th>
+                <th className="px-4 py-3 text-center">OMR</th>
                 <th className="px-4 py-3 text-center">리포트</th>
               </tr>
             </thead>
@@ -140,6 +142,9 @@ export function ExamResultsView({ examId, totalScore, passingScore }: ExamResult
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString('ko-KR') : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <OmrImageButton examId={examId} resultId={result.id} />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ReportButton

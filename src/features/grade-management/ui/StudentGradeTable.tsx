@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/pagination';
 import { FileText, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OmrImageButton } from '@/features/omr-grading';
 
 interface StudentGradeTableProps {
     examId: number;
@@ -154,17 +155,17 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                                     {new Date(student.submittedAt).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-gray-400 hover:text-indigo-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onStudentSelect?.(student);
-                                        }}
-                                    >
-                                        <FileText className="w-4 h-4" />
-                                    </Button>
+                                    <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <OmrImageButton examId={examId} resultId={student.resultId} size="icon" />
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-gray-400 hover:text-indigo-600"
+                                            onClick={() => onStudentSelect?.(student)}
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))

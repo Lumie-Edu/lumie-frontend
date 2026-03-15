@@ -51,6 +51,7 @@ interface BatchOmrResult {
     studentName: string | null;
     totalScore: number | null;
     grade: number | null;
+    resultId: number | null;
     error: string | null;
 }
 
@@ -85,10 +86,14 @@ const QUERY_KEYS = {
     omrJob: (examId: number, jobId: number) => ['omr-job', examId, jobId] as const,
 };
 
+interface SubmitOmrGradingOptions {
+    onUploadProgress?: (percent: number) => void;
+}
+
 /**
- * 비동기 배치 OMR 채점 제출 → jobId 반환
+ * 비동기 배치 OMR 채점 제출 → jobId 반환 (XMLHttpRequest로 upload progress 지원)
  */
-export function useSubmitOmrGrading() {
+export function useSubmitOmrGrading({ onUploadProgress }: SubmitOmrGradingOptions = {}) {
     return useMutation({
         mutationFn: async ({ examId, images }: OmrGradingRequest) => {
             if (images.length > MAX_IMAGES) {
@@ -101,34 +106,41 @@ export function useSubmitOmrGrading() {
             });
 
             const tenantSlug = storage.getTenantSlug();
-            const headers: HeadersInit = {};
-            if (tenantSlug) {
-                headers['X-Tenant-Slug'] = tenantSlug;
-            }
 
-            const response = await fetch(
-                `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/omr/batch`,
-                {
-                    method: 'POST',
-                    body: formData,
-                    headers,
-                    credentials: 'include',
+            return new Promise<OmrJobResponse>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/omr/batch`);
+                xhr.withCredentials = true;
+
+                if (tenantSlug) {
+                    xhr.setRequestHeader('X-Tenant-Slug', tenantSlug);
                 }
-            );
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                let errorMessage = 'OMR 채점 제출에 실패했습니다.';
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.detail || errorJson.message || errorMessage;
-                } catch {
-                    // ignore parse error
-                }
-                throw new Error(errorMessage);
-            }
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        onUploadProgress?.(percent);
+                    }
+                };
 
-            return response.json() as Promise<OmrJobResponse>;
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText) as OmrJobResponse);
+                    } else {
+                        let errorMessage = 'OMR 채점 제출에 실패했습니다.';
+                        try {
+                            const errorJson = JSON.parse(xhr.responseText);
+                            errorMessage = errorJson.detail || errorJson.message || errorMessage;
+                        } catch {
+                            // ignore parse error
+                        }
+                        reject(new Error(errorMessage));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('네트워크 오류가 발생했습니다.'));
+                xhr.send(formData);
+            });
         },
         onSuccess: () => {
             toast.success('채점 요청이 제출되었습니다. 백그라운드에서 처리 중입니다.');
