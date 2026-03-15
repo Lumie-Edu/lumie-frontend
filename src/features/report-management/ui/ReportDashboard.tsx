@@ -5,6 +5,7 @@ import { FileText, Download, Users, Loader2, CheckCircle, XCircle, ArrowLeft, Se
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TableFilter } from '@/src/shared/ui/TableFilter';
 import {
   Table,
@@ -30,19 +31,19 @@ function ReportTableSkeleton() {
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow className="text-base">
+            <TableHead className="w-[5%]"></TableHead>
             <TableHead className="text-center">이름</TableHead>
             <TableHead className="text-center">점수</TableHead>
             <TableHead className="text-center">등급</TableHead>
-            <TableHead className="text-center w-[15%]">리포트</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {Array.from({ length: 8 }).map((_, i) => (
             <TableRow key={i} className="text-base">
+              <TableCell className="text-center"><Skeleton className="h-4 w-4 mx-auto" /></TableCell>
               <TableCell className="text-center"><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
               <TableCell className="text-center"><Skeleton className="h-5 w-20 mx-auto" /></TableCell>
               <TableCell className="text-center"><Skeleton className="h-8 w-8 rounded-full mx-auto" /></TableCell>
-              <TableCell className="text-center"><Skeleton className="h-9 w-20 mx-auto" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -55,6 +56,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
   const { data: results = [], isLoading } = useStudentResultSummaries(selectedExam?.id ?? 0);
   const { mutate: generateReport, isPending } = useGenerateReport();
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [academyFilter, setAcademyFilter] = useState<string>('all');
@@ -92,6 +94,27 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
     });
   }, [results, searchTerm, academyFilter, activeFilter, gradeFilter, passFilter, isGraded]);
 
+  const allSelected = filteredResults.length > 0 && filteredResults.every((r) => selectedIds.has(r.resultId));
+  const someSelected = selectedIds.size > 0;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(filteredResults.map((r) => r.resultId)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (resultId: number, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) {
+      newSet.add(resultId);
+    } else {
+      newSet.delete(resultId);
+    }
+    setSelectedIds(newSet);
+  };
+
   const handleGenerateReport = (studentId: number) => {
     if (!selectedExam) return;
     setGeneratingIds(prev => new Set(prev).add(studentId));
@@ -109,9 +132,10 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
     );
   };
 
-  const handleGenerateAll = async () => {
+  const handleGenerateSelected = async () => {
     if (!selectedExam) return;
-    for (const result of filteredResults) {
+    const selected = filteredResults.filter((r) => selectedIds.has(r.resultId));
+    for (const result of selected) {
       generateReport({ studentId: result.studentId, examId: selectedExam.id });
       await new Promise(resolve => setTimeout(resolve, 500));
     }
@@ -234,17 +258,32 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
               }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* 배치 액션 바 */}
+      {someSelected && (
+        <div className="flex items-center gap-2 px-4 tablet:px-8 py-2 bg-muted border-b border-gray-200 shrink-0">
+          <span className="text-sm text-muted-foreground">{selectedIds.size}명 선택</span>
           <Button
-            onClick={handleGenerateAll}
-            disabled={filteredResults.length === 0 || isPending}
+            size="sm"
+            onClick={handleGenerateSelected}
+            disabled={isPending}
             className="gap-2"
           >
             <Download className="w-4 h-4" />
-            <span className="hidden smalltablet:inline">전체 리포트 다운로드</span>
-            <span className="smalltablet:hidden">전체</span>
+            선택 리포트 다운로드
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-muted-foreground"
+          >
+            선택 해제
           </Button>
         </div>
-      </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-4 tablet:p-8">
@@ -259,13 +298,27 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
           <>
             {/* 모바일 카드 뷰 */}
             <div className="space-y-3 smalltablet:hidden">
+              <div className="flex items-center gap-2 px-1">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm text-muted-foreground">전체 선택</span>
+              </div>
               {filteredResults.map((result) => {
                 const isGenerating = generatingIds.has(result.studentId);
+                const isSelected = selectedIds.has(result.resultId);
                 const maxScore = selectedExam.totalPossibleScore || 100;
                 return (
-                  <div key={result.resultId} className="rounded-lg border p-4 bg-white">
+                  <div key={result.resultId} className={`rounded-lg border p-4 bg-white ${isSelected ? 'bg-muted/30 border-primary/30' : ''}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-base">{result.studentName}</span>
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleSelectOne(result.resultId, !!checked)}
+                        />
+                        <span className="font-medium text-base">{result.studentName}</span>
+                      </div>
                       {isGraded ? (
                         result.grade != null ? (
                           <span className={cn(
@@ -284,22 +337,8 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pl-9">
                       <span className="text-sm text-muted-foreground">{result.score} / {maxScore}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateReport(result.studentId)}
-                        disabled={isGenerating}
-                        className="gap-1.5 h-8"
-                      >
-                        {isGenerating ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <FileText className="w-3.5 h-3.5" />
-                        )}
-                        {isGenerating ? '생성 중' : '리포트'}
-                      </Button>
                     </div>
                   </div>
                 );
@@ -311,19 +350,30 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
               <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow className="text-base">
+                    <TableHead className="w-[5%] text-center">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="text-center">이름</TableHead>
                     <TableHead className="text-center">점수</TableHead>
                     <TableHead className="text-center">{isGraded ? '등급' : '결과'}</TableHead>
-                    <TableHead className="text-center w-[15%]">리포트</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredResults.map((result) => {
-                    const isGenerating = generatingIds.has(result.studentId);
+                    const isSelected = selectedIds.has(result.resultId);
                     const maxScore = selectedExam.totalPossibleScore || 100;
 
                     return (
-                      <TableRow key={result.resultId} className="text-base">
+                      <TableRow key={result.resultId} className={`text-base ${isSelected ? 'bg-muted/30' : ''}`}>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectOne(result.resultId, !!checked)}
+                          />
+                        </TableCell>
                         <TableCell className="text-center font-medium">{result.studentName}</TableCell>
                         <TableCell className="text-center">
                           {result.score}
@@ -355,27 +405,6 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                               불합격
                             </span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleGenerateReport(result.studentId)}
-                            disabled={isGenerating}
-                            className="gap-2"
-                          >
-                            {isGenerating ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                생성 중...
-                              </>
-                            ) : (
-                              <>
-                                <FileText className="w-4 h-4" />
-                                리포트
-                              </>
-                            )}
-                          </Button>
                         </TableCell>
                       </TableRow>
                     );
