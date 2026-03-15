@@ -35,9 +35,10 @@ export interface FilterDefinition {
 interface TableFilterProps {
   filters: FilterDefinition[];
   onReset?: () => void;
+  className?: string;
 }
 
-export function TableFilter({ filters, onReset }: TableFilterProps) {
+export function TableFilter({ filters, onReset, className }: TableFilterProps) {
   const [open, setOpen] = useState(false);
   const activeCount = filters.filter((f) => f.value !== f.defaultValue).length;
 
@@ -49,7 +50,7 @@ export function TableFilter({ filters, onReset }: TableFilterProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className={`gap-2 ${className ?? ''}`}>
           <SlidersHorizontal className="h-4 w-4" />
           필터
           {activeCount > 0 && (

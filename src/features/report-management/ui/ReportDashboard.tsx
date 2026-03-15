@@ -163,7 +163,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 smalltablet:gap-3">
+        <div className="flex items-center gap-2 smalltablet:gap-3 flex-1 justify-end">
           <div className="relative hidden smalltablet:block smalltablet:w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -176,8 +176,9 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
               className="pl-9"
             />
           </div>
-          <div className="hidden smalltablet:block">
+          <div className="hidden smalltablet:block flex-1">
             <TableFilter
+              className="w-full"
               filters={[
                 {
                   key: 'academy',
