@@ -57,16 +57,29 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [academyFilter, setAcademyFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('active');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [passFilter, setPassFilter] = useState<string>('all');
 
   const isGraded = selectedExam?.category === 'GRADED';
+
+  const academyOptions = useMemo(() => {
+    const names = [...new Set(results.map((r) => r.academyName).filter(Boolean))].sort();
+    return [
+      { value: 'all', label: '전체 학원' },
+      ...names.map((name) => ({ value: name, label: name })),
+    ];
+  }, [results]);
 
   const filteredResults = useMemo(() => {
     return results.filter((r) => {
       if (searchTerm && !r.studentName.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
+      if (academyFilter !== 'all' && r.academyName !== academyFilter) return false;
+      if (activeFilter === 'active' && !r.isActive) return false;
+      if (activeFilter === 'inactive' && r.isActive) return false;
       if (isGraded && gradeFilter !== 'all') {
         const [min, max] = gradeFilter.split('-').map(Number);
         if (r.grade == null || r.grade < min || r.grade > max) return false;
@@ -77,7 +90,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
       }
       return true;
     });
-  }, [results, searchTerm, gradeFilter, passFilter, isGraded]);
+  }, [results, searchTerm, academyFilter, activeFilter, gradeFilter, passFilter, isGraded]);
 
   const handleGenerateReport = (studentId: number) => {
     if (!selectedExam) return;
@@ -165,8 +178,28 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
           </div>
           <div className="hidden smalltablet:block">
             <TableFilter
-              filters={isGraded ? [
+              filters={[
                 {
+                  key: 'academy',
+                  label: '학원',
+                  value: academyFilter,
+                  defaultValue: 'all',
+                  options: academyOptions,
+                  onChange: (v) => setAcademyFilter(v),
+                },
+                {
+                  key: 'status',
+                  label: '상태',
+                  value: activeFilter,
+                  defaultValue: 'active',
+                  options: [
+                    { value: 'all', label: '전체' },
+                    { value: 'active', label: '재원' },
+                    { value: 'inactive', label: '퇴원' },
+                  ],
+                  onChange: (v) => setActiveFilter(v),
+                },
+                ...(isGraded ? [{
                   key: 'grade',
                   label: '등급',
                   value: gradeFilter,
@@ -178,10 +211,8 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                     { value: '5-6', label: '5~6등급' },
                     { value: '7-9', label: '7~9등급' },
                   ],
-                  onChange: (v) => setGradeFilter(v),
-                },
-              ] : [
-                {
+                  onChange: (v: string) => setGradeFilter(v),
+                }] : [{
                   key: 'result',
                   label: '결과',
                   value: passFilter,
@@ -191,10 +222,15 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                     { value: 'passed', label: '합격' },
                     { value: 'failed', label: '불합격' },
                   ],
-                  onChange: (v) => setPassFilter(v),
-                },
+                  onChange: (v: string) => setPassFilter(v),
+                }]),
               ]}
-              onReset={() => { setGradeFilter('all'); setPassFilter('all'); }}
+              onReset={() => {
+                setAcademyFilter('all');
+                setActiveFilter('active');
+                setGradeFilter('all');
+                setPassFilter('all');
+              }}
             />
           </div>
           <Button

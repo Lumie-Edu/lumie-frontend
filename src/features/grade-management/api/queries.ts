@@ -251,6 +251,8 @@ export interface StudentResultSummary {
     resultId: number;
     studentId: number;
     studentName: string;
+    academyName: string;
+    isActive: boolean;
     score: number;
     grade: number | null;
     examCategory: 'GRADED' | 'PASS_FAIL';
