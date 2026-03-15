@@ -35,6 +35,7 @@ function ReportTableSkeleton() {
             <TableHead className="text-center">이름</TableHead>
             <TableHead className="text-center">점수</TableHead>
             <TableHead className="text-center">등급</TableHead>
+            <TableHead className="text-center w-[12%]">리포트</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -44,6 +45,7 @@ function ReportTableSkeleton() {
               <TableCell className="text-center"><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
               <TableCell className="text-center"><Skeleton className="h-5 w-20 mx-auto" /></TableCell>
               <TableCell className="text-center"><Skeleton className="h-8 w-8 rounded-full mx-auto" /></TableCell>
+              <TableCell className="text-center"><Skeleton className="h-9 w-20 mx-auto" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -338,6 +340,20 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                     </div>
                     <div className="flex items-center justify-between pl-9">
                       <span className="text-sm text-muted-foreground">{result.score} / {maxScore}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateReport(result.studentId)}
+                        disabled={isGenerating}
+                        className="gap-1.5 h-8"
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5" />
+                        )}
+                        {isGenerating ? '생성 중' : '리포트'}
+                      </Button>
                     </div>
                   </div>
                 );
@@ -358,6 +374,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                     <TableHead className="text-center">이름</TableHead>
                     <TableHead className="text-center">점수</TableHead>
                     <TableHead className="text-center">{isGraded ? '등급' : '결과'}</TableHead>
+                    <TableHead className="text-center w-[12%]">리포트</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -404,6 +421,27 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                               불합격
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateReport(result.studentId)}
+                            disabled={generatingIds.has(result.studentId)}
+                            className="gap-2"
+                          >
+                            {generatingIds.has(result.studentId) ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                생성 중...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-4 h-4" />
+                                리포트
+                              </>
+                            )}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
