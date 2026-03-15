@@ -226,7 +226,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                 const isGenerating = generatingIds.has(result.studentId);
                 const maxScore = selectedExam.totalPossibleScore || 100;
                 return (
-                  <div key={result.studentId} className="rounded-lg border p-4 bg-white">
+                  <div key={`${result.studentId}-${result.score}`} className="rounded-lg border p-4 bg-white">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-base">{result.studentName}</span>
                       {isGraded ? (
@@ -286,7 +286,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                     const maxScore = selectedExam.totalPossibleScore || 100;
 
                     return (
-                      <TableRow key={result.studentId} className="text-base">
+                      <TableRow key={`${result.studentId}-${result.score}`} className="text-base">
                         <TableCell className="text-center font-medium">{result.studentName}</TableCell>
                         <TableCell className="text-center">
                           {result.score}
