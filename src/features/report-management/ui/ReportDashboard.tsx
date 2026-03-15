@@ -275,10 +275,9 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
             선택 리포트 다운로드
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setSelectedIds(new Set())}
-            className="text-muted-foreground"
           >
             선택 해제
           </Button>
