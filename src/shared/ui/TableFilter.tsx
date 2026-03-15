@@ -35,10 +35,10 @@ export interface FilterDefinition {
 interface TableFilterProps {
   filters: FilterDefinition[];
   onReset?: () => void;
-  className?: string;
+  popoverClassName?: string;
 }
 
-export function TableFilter({ filters, onReset, className }: TableFilterProps) {
+export function TableFilter({ filters, onReset, popoverClassName }: TableFilterProps) {
   const [open, setOpen] = useState(false);
   const activeCount = filters.filter((f) => f.value !== f.defaultValue).length;
 
@@ -50,7 +50,7 @@ export function TableFilter({ filters, onReset, className }: TableFilterProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={`gap-2 ${className ?? ''}`}>
+        <Button variant="outline" className="gap-2">
           <SlidersHorizontal className="h-4 w-4" />
           필터
           {activeCount > 0 && (
@@ -60,7 +60,7 @@ export function TableFilter({ filters, onReset, className }: TableFilterProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 space-y-4">
+      <PopoverContent align="end" className={`space-y-4 ${popoverClassName ?? 'w-64'}`}>
         {filters.map((filter) => (
           <div key={filter.key} className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{filter.label}</Label>
