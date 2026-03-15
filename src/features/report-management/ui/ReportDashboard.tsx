@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import { FileText, Download, Users, Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGenerateReport, type Exam } from '@/entities/exam';
 import { useStudentResultSummaries, type StudentResultSummary } from '@/features/grade-management';
 import { cn } from '@/lib/utils';
@@ -11,6 +20,33 @@ import { cn } from '@/lib/utils';
 interface ReportDashboardProps {
   selectedExam: Exam | null;
   onBack?: () => void;
+}
+
+function ReportTableSkeleton() {
+  return (
+    <div className="rounded-md border">
+      <Table className="table-fixed w-full">
+        <TableHeader>
+          <TableRow className="text-base">
+            <TableHead className="text-center">이름</TableHead>
+            <TableHead className="text-center">점수</TableHead>
+            <TableHead className="text-center">등급</TableHead>
+            <TableHead className="text-center w-[15%]">리포트</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <TableRow key={i} className="text-base">
+              <TableCell className="text-center"><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
+              <TableCell className="text-center"><Skeleton className="h-5 w-20 mx-auto" /></TableCell>
+              <TableCell className="text-center"><Skeleton className="h-8 w-8 rounded-full mx-auto" /></TableCell>
+              <TableCell className="text-center"><Skeleton className="h-9 w-20 mx-auto" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 }
 
 export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) {
@@ -76,17 +112,18 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
             </Button>
           )}
           <div>
-          <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
-          <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-            <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-gray-600">
-              {selectedExam.category === 'PASS_FAIL'
-                ? '합격/불합격'
-                : selectedExam.gradingType === 'RELATIVE'
-                  ? `상대평가 · ${selectedExam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
-                  : '절대평가'}
-            </span>
-            <span>•</span>
-            <span>{results.length}명 응시</span>
+            <h2 className="text-xl tablet:text-2xl font-bold text-gray-900">{selectedExam.name}</h2>
+            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+              <Badge variant="secondary" className="text-xs">
+                {selectedExam.category === 'PASS_FAIL'
+                  ? '합격/불합격'
+                  : selectedExam.gradingType === 'RELATIVE'
+                    ? `상대평가 · ${selectedExam.gradeScale === 'FIVE_GRADE' ? '5등급제' : '9등급제'}`
+                    : '절대평가'}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {results.length}명 응시
+              </Badge>
             </div>
           </div>
         </div>
@@ -97,7 +134,8 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
             className="gap-2"
           >
             <Download className="w-4 h-4" />
-            전체 리포트 다운로드
+            <span className="hidden smalltablet:inline">전체 리포트 다운로드</span>
+            <span className="smalltablet:hidden">전체</span>
           </Button>
         </div>
       </div>
@@ -105,108 +143,141 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-4 tablet:p-8">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40">
-            <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-          </div>
+          <ReportTableSkeleton />
         ) : results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <Users className="w-12 h-12 mb-3 opacity-50" />
-            <p className="text-sm">응시한 학생이 없습니다</p>
+          <div className="text-center py-12 bg-muted/50 rounded-lg">
+            <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">응시한 학생이 없습니다</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 border-b border-gray-200">
-                  <TableHead className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    학생
-                  </TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    점수
-                  </TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    {isGraded ? '등급' : '결과'}
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    리포트
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((result) => {
-                  const isGenerating = generatingIds.has(result.studentId);
-                  const maxScore = selectedExam.totalPossibleScore || 100;
-
-                  return (
-                    <TableRow key={result.studentId} className="hover:bg-gray-50 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-semibold text-indigo-600">
-                              {result.studentName?.charAt(0) ?? '?'}
-                            </span>
-                          </div>
-                          <span className="font-medium text-gray-900">{result.studentName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-gray-900">{result.score}</span>
-                        <span className="text-gray-400 ml-1">/ {maxScore}</span>
-                      </TableCell>
-                      <TableCell>
-                        {isGraded ? (
-                          result.grade != null ? (
-                            <span className={cn(
-                              'inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm',
-                              result.grade <= 2 ? 'bg-indigo-100 text-indigo-700' :
-                              result.grade <= 4 ? 'bg-blue-100 text-blue-700' :
-                              result.grade <= 6 ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            )}>
-                              {result.grade}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )
-                        ) : result.isPassed ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">합격</span>
+          <>
+            {/* 모바일 카드 뷰 */}
+            <div className="space-y-3 smalltablet:hidden">
+              {results.map((result) => {
+                const isGenerating = generatingIds.has(result.studentId);
+                const maxScore = selectedExam.totalPossibleScore || 100;
+                return (
+                  <div key={result.studentId} className="rounded-lg border p-4 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-base">{result.studentName}</span>
+                      {isGraded ? (
+                        result.grade != null ? (
+                          <span className={cn(
+                            'inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-sm',
+                            result.grade <= 2 ? 'bg-indigo-100 text-indigo-700' :
+                            result.grade <= 4 ? 'bg-blue-100 text-blue-700' :
+                            result.grade <= 6 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          )}>
+                            {result.grade}
                           </span>
+                        ) : <span className="text-muted-foreground">-</span>
+                      ) : (
+                        <Badge variant={result.isPassed ? 'default' : 'destructive'} className="text-xs">
+                          {result.isPassed ? '합격' : '불합격'}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{result.score} / {maxScore}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateReport(result.studentId)}
+                        disabled={isGenerating}
+                        className="gap-1.5 h-8"
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <span className="flex items-center gap-1 text-red-600">
-                            <XCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">불합격</span>
-                          </span>
+                          <FileText className="w-3.5 h-3.5" />
                         )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleGenerateReport(result.studentId)}
-                          disabled={isGenerating}
-                          className="gap-2"
-                        >
-                          {isGenerating ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              생성 중...
-                            </>
+                        {isGenerating ? '생성 중' : '리포트'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 테이블 뷰 (smalltablet 이상) */}
+            <div className="hidden smalltablet:block rounded-md border">
+              <Table className="table-fixed w-full">
+                <TableHeader>
+                  <TableRow className="text-base">
+                    <TableHead className="text-center">이름</TableHead>
+                    <TableHead className="text-center">점수</TableHead>
+                    <TableHead className="text-center">{isGraded ? '등급' : '결과'}</TableHead>
+                    <TableHead className="text-center w-[15%]">리포트</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.map((result) => {
+                    const isGenerating = generatingIds.has(result.studentId);
+                    const maxScore = selectedExam.totalPossibleScore || 100;
+
+                    return (
+                      <TableRow key={result.studentId} className="text-base">
+                        <TableCell className="text-center font-medium">{result.studentName}</TableCell>
+                        <TableCell className="text-center">
+                          {result.score}
+                          <span className="text-muted-foreground ml-1">/ {maxScore}</span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {isGraded ? (
+                            result.grade != null ? (
+                              <span className={cn(
+                                'inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm',
+                                result.grade <= 2 ? 'bg-indigo-100 text-indigo-700' :
+                                result.grade <= 4 ? 'bg-blue-100 text-blue-700' :
+                                result.grade <= 6 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              )}>
+                                {result.grade}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )
+                          ) : result.isPassed ? (
+                            <span className="inline-flex items-center gap-1 text-green-600">
+                              <CheckCircle className="w-4 h-4" />
+                              합격
+                            </span>
                           ) : (
-                            <>
-                              <FileText className="w-4 h-4" />
-                              리포트
-                            </>
+                            <span className="inline-flex items-center gap-1 text-red-600">
+                              <XCircle className="w-4 h-4" />
+                              불합격
+                            </span>
                           )}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateReport(result.studentId)}
+                            disabled={isGenerating}
+                            className="gap-2"
+                          >
+                            {isGenerating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                생성 중...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-4 h-4" />
+                                리포트
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
     </div>
