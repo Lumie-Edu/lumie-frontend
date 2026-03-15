@@ -248,6 +248,7 @@ export function useAcademyComparison(examId: number) {
 }
 
 export interface StudentResultSummary {
+    resultId: number;
     studentId: number;
     studentName: string;
     score: number;
