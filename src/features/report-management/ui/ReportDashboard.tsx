@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { FileText, Download, Users, Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { FileText, Download, Users, Loader2, CheckCircle, XCircle, ArrowLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { TableFilter } from '@/src/shared/ui/TableFilter';
 import {
   Table,
   TableBody,
@@ -53,8 +55,29 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
   const { data: results = [], isLoading } = useStudentResultSummaries(selectedExam?.id ?? 0);
   const { mutate: generateReport, isPending } = useGenerateReport();
   const [generatingIds, setGeneratingIds] = useState<Set<number>>(new Set());
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [gradeFilter, setGradeFilter] = useState<string>('all');
+  const [passFilter, setPassFilter] = useState<string>('all');
 
   const isGraded = selectedExam?.category === 'GRADED';
+
+  const filteredResults = useMemo(() => {
+    return results.filter((r) => {
+      if (searchTerm && !r.studentName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      if (isGraded && gradeFilter !== 'all') {
+        const [min, max] = gradeFilter.split('-').map(Number);
+        if (r.grade == null || r.grade < min || r.grade > max) return false;
+      }
+      if (!isGraded && passFilter !== 'all') {
+        if (passFilter === 'passed' && !r.isPassed) return false;
+        if (passFilter === 'failed' && r.isPassed) return false;
+      }
+      return true;
+    });
+  }, [results, searchTerm, gradeFilter, passFilter, isGraded]);
 
   const handleGenerateReport = (studentId: number) => {
     if (!selectedExam) return;
@@ -75,7 +98,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
 
   const handleGenerateAll = async () => {
     if (!selectedExam) return;
-    for (const result of results) {
+    for (const result of filteredResults) {
       generateReport({ studentId: result.studentId, examId: selectedExam.id });
       await new Promise(resolve => setTimeout(resolve, 500));
     }
@@ -127,10 +150,56 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 smalltablet:gap-3">
+          <div className="relative hidden smalltablet:block smalltablet:w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="이름 검색"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setSearchTerm(searchInput);
+              }}
+              className="pl-9"
+            />
+          </div>
+          <div className="hidden smalltablet:block">
+            <TableFilter
+              filters={isGraded ? [
+                {
+                  key: 'grade',
+                  label: '등급',
+                  value: gradeFilter,
+                  defaultValue: 'all',
+                  options: [
+                    { value: 'all', label: '전체' },
+                    { value: '1-2', label: '1~2등급' },
+                    { value: '3-4', label: '3~4등급' },
+                    { value: '5-6', label: '5~6등급' },
+                    { value: '7-9', label: '7~9등급' },
+                  ],
+                  onChange: (v) => setGradeFilter(v),
+                },
+              ] : [
+                {
+                  key: 'result',
+                  label: '결과',
+                  value: passFilter,
+                  defaultValue: 'all',
+                  options: [
+                    { value: 'all', label: '전체' },
+                    { value: 'passed', label: '합격' },
+                    { value: 'failed', label: '불합격' },
+                  ],
+                  onChange: (v) => setPassFilter(v),
+                },
+              ]}
+              onReset={() => { setGradeFilter('all'); setPassFilter('all'); }}
+            />
+          </div>
           <Button
             onClick={handleGenerateAll}
-            disabled={results.length === 0 || isPending}
+            disabled={filteredResults.length === 0 || isPending}
             className="gap-2"
           >
             <Download className="w-4 h-4" />
@@ -144,7 +213,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
       <div className="flex-1 overflow-y-auto p-4 tablet:p-8">
         {isLoading ? (
           <ReportTableSkeleton />
-        ) : results.length === 0 ? (
+        ) : filteredResults.length === 0 ? (
           <div className="text-center py-12 bg-muted/50 rounded-lg">
             <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">응시한 학생이 없습니다</p>
@@ -153,7 +222,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
           <>
             {/* 모바일 카드 뷰 */}
             <div className="space-y-3 smalltablet:hidden">
-              {results.map((result) => {
+              {filteredResults.map((result) => {
                 const isGenerating = generatingIds.has(result.studentId);
                 const maxScore = selectedExam.totalPossibleScore || 100;
                 return (
@@ -212,7 +281,7 @@ export function ReportDashboard({ selectedExam, onBack }: ReportDashboardProps) 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((result) => {
+                  {filteredResults.map((result) => {
                     const isGenerating = generatingIds.has(result.studentId);
                     const maxScore = selectedExam.totalPossibleScore || 100;
 
