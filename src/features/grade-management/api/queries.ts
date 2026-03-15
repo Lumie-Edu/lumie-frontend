@@ -99,6 +99,7 @@ const QUERY_KEYS = {
     examStats: (examId: number) => [...QUERY_KEYS.all, 'stats', examId] as const,
     studentGrades: (examId: number, params?: Record<string, unknown>) => [...QUERY_KEYS.all, 'grades', examId, params] as const,
     academyComparison: (examId: number) => [...QUERY_KEYS.all, 'academy-comparison', examId] as const,
+    resultsSummary: (examId: number) => [...QUERY_KEYS.all, 'results-summary', examId] as const,
     templates: ['exam-templates'] as const,
 };
 
@@ -240,6 +241,27 @@ export function useAcademyComparison(examId: number) {
         queryFn: async () => {
             return examClient.get<AcademyComparison[]>(
                 `/api/v1/statistics/exams/${examId}/academy-comparison`
+            );
+        },
+        enabled: examId > 0,
+    });
+}
+
+export interface StudentResultSummary {
+    studentId: number;
+    studentName: string;
+    score: number;
+    grade: number | null;
+    examCategory: 'GRADED' | 'PASS_FAIL';
+    isPassed: boolean;
+}
+
+export function useStudentResultSummaries(examId: number) {
+    return useQuery({
+        queryKey: QUERY_KEYS.resultsSummary(examId),
+        queryFn: async () => {
+            return examClient.get<StudentResultSummary[]>(
+                `/api/v1/statistics/exams/${examId}/results-summary`
             );
         },
         enabled: examId > 0,

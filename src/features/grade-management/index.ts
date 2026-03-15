@@ -13,8 +13,10 @@ export { StudentDetailPanel } from './ui/StudentDetailPanel';
 export {
     useExamStatistics,
     useStudentGrades,
+    useStudentResultSummaries,
     type GradeStatistics,
     type StudentGrade,
+    type StudentResultSummary,
 } from './api/queries';
 
 // Statistics Queries
