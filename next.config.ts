@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://dev.lumie0213.kro.kr';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://dev.lumie.lumie-infra.com';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
