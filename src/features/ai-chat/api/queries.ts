@@ -17,7 +17,7 @@ export function useConversations() {
     queryKey: QUERY_KEYS.conversations(),
     queryFn: () =>
       aiClient.get<PaginatedResponse<Conversation>>(
-        '/api/v1/conversations?size=50&sort=updatedAt,desc'
+        '/v1/conversations?size=50&sort=updatedAt,desc'
       ),
   });
 }
@@ -25,7 +25,7 @@ export function useConversations() {
 export function useConversation(id: number | null) {
   return useQuery({
     queryKey: QUERY_KEYS.conversation(id!),
-    queryFn: () => aiClient.get<Conversation>(`/api/v1/conversations/${id}`),
+    queryFn: () => aiClient.get<Conversation>(`/v1/conversations/${id}`),
     enabled: id !== null && id > 0,
   });
 }
@@ -34,7 +34,7 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { conversationId?: number; message: string }) =>
-      aiClient.post<ChatResponse>('/api/v1/chat', data),
+      aiClient.post<ChatResponse>('/v1/chat', data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.conversations() });
       queryClient.invalidateQueries({
@@ -48,7 +48,7 @@ export function useConfirmAction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { messageId: number; confirmed: boolean }) =>
-      aiClient.post<ChatResponse>('/api/v1/chat/confirm', data),
+      aiClient.post<ChatResponse>('/v1/chat/confirm', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
     },
@@ -59,7 +59,7 @@ export function useDeleteConversation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) =>
-      aiClient.delete<void>(`/api/v1/conversations/${id}`),
+      aiClient.delete<void>(`/v1/conversations/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.conversations() });
     },

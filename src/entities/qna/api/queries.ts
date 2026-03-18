@@ -28,7 +28,7 @@ export function useQnaList(params?: QnaQueryParams) {
       if (params?.status) searchParams.set('status', params.status);
       const query = searchParams.toString();
       return contentClient.get<PaginatedResponse<Qna>>(
-        `/api/v1/qna${query ? `?${query}` : ''}`
+        `/v1/qna${query ? `?${query}` : ''}`
       );
     },
   });
@@ -37,7 +37,7 @@ export function useQnaList(params?: QnaQueryParams) {
 export function useQna(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => contentClient.get<Qna>(`/api/v1/qna/${id}`),
+    queryFn: () => contentClient.get<Qna>(`/v1/qna/${id}`),
     enabled: id > 0,
   });
 }
@@ -45,7 +45,7 @@ export function useQna(id: number) {
 export function useMyQnaList() {
   return useQuery({
     queryKey: QUERY_KEYS.myList(),
-    queryFn: () => contentClient.get<PaginatedResponse<Qna>>('/api/v1/qna/my'),
+    queryFn: () => contentClient.get<PaginatedResponse<Qna>>('/v1/qna/my'),
   });
 }
 
@@ -54,7 +54,7 @@ export function useCreateQna() {
 
   return useMutation({
     mutationFn: (data: CreateQnaInput) =>
-      contentClient.post<Qna>('/api/v1/qna', data),
+      contentClient.post<Qna>('/v1/qna', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('질문이 등록되었습니다.');
@@ -67,7 +67,7 @@ export function useAnswerQna(id: number) {
 
   return useMutation({
     mutationFn: (data: AnswerQnaInput) =>
-      contentClient.post<Qna>(`/api/v1/qna/${id}/answer`, data),
+      contentClient.post<Qna>(`/v1/qna/${id}/answer`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('답변이 등록되었습니다.');
@@ -79,7 +79,7 @@ export function useCloseQna(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => contentClient.post<Qna>(`/api/v1/qna/${id}/close`),
+    mutationFn: () => contentClient.post<Qna>(`/v1/qna/${id}/close`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('질문이 종료되었습니다.');
@@ -91,7 +91,7 @@ export function useDeleteQna() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => contentClient.delete<void>(`/api/v1/qna/${id}`),
+    mutationFn: (id: number) => contentClient.delete<void>(`/v1/qna/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('질문이 삭제되었습니다.');

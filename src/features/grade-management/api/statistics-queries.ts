@@ -206,7 +206,7 @@ export function useStudentRank(studentId: number, examId: number) {
     return useQuery({
         queryKey: statisticsKeys.studentRank(studentId, examId),
         queryFn: () => examClient.get<StudentRank>(
-            `/api/v1/statistics/students/${studentId}/rank?examId=${examId}`
+            `/v1/statistics/students/${studentId}/rank?examId=${examId}`
         ),
         enabled: studentId > 0 && examId > 0,
     });
@@ -216,7 +216,7 @@ export function useStabilityIndex(studentId: number) {
     return useQuery({
         queryKey: statisticsKeys.stability(studentId),
         queryFn: () => examClient.get<StabilityIndex>(
-            `/api/v1/statistics/students/${studentId}/stability`
+            `/v1/statistics/students/${studentId}/stability`
         ),
         enabled: studentId > 0,
     });
@@ -226,7 +226,7 @@ export function useTypeGrowthTrend(studentId: number) {
     return useQuery({
         queryKey: statisticsKeys.typeGrowth(studentId),
         queryFn: () => examClient.get<TypeGrowthTrend>(
-            `/api/v1/statistics/students/${studentId}/type-growth`
+            `/v1/statistics/students/${studentId}/type-growth`
         ),
         enabled: studentId > 0,
     });
@@ -236,7 +236,7 @@ export function useNormalizedScores(studentId: number) {
     return useQuery({
         queryKey: statisticsKeys.normalized(studentId),
         queryFn: () => examClient.get<NormalizedScore>(
-            `/api/v1/statistics/students/${studentId}/normalized`
+            `/v1/statistics/students/${studentId}/normalized`
         ),
         enabled: studentId > 0,
     });
@@ -246,7 +246,7 @@ export function useChoiceDistribution(examId: number) {
     return useQuery({
         queryKey: statisticsKeys.choiceDistribution(examId),
         queryFn: () => examClient.get<ChoiceDistribution>(
-            `/api/v1/statistics/exams/${examId}/choices`
+            `/v1/statistics/exams/${examId}/choices`
         ),
         enabled: examId > 0,
     });
@@ -256,7 +256,7 @@ export function useGoalSimulation(studentId: number) {
     return useMutation({
         mutationFn: (request: GoalSimulationRequest) =>
             examClient.post<GoalSimulation>(
-                `/api/v1/statistics/students/${studentId}/goal-simulation`,
+                `/v1/statistics/students/${studentId}/goal-simulation`,
                 request
             ),
     });
@@ -266,7 +266,7 @@ export function useAcademyGrowth() {
     return useQuery({
         queryKey: statisticsKeys.academyGrowth(),
         queryFn: () => examClient.get<AcademyGrowth>(
-            `/api/v1/statistics/academy/growth`
+            `/v1/statistics/academy/growth`
         ),
     });
 }
@@ -275,7 +275,7 @@ export function useDashboardStatistics() {
     return useQuery({
         queryKey: statisticsKeys.dashboard(),
         queryFn: () => examClient.get<DashboardStatistics>(
-            `/api/v1/statistics/dashboard`
+            `/v1/statistics/dashboard`
         ),
     });
 }

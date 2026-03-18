@@ -116,7 +116,7 @@ export function useGradeExams(params?: { page?: number; size?: number; search?: 
             if (params?.search) searchParams.set('title', params.search);
 
             const query = searchParams.toString();
-            const url = `/api/v1/exams?sort=createdAt,desc${query ? `&${query}` : ''}`;
+            const url = `/v1/exams?sort=createdAt,desc${query ? `&${query}` : ''}`;
             return examClient.get<PaginatedResponse<GradeExam>>(url);
         },
     });
@@ -126,7 +126,7 @@ export function useExamDetail(examId: number, enabled: boolean = true) {
     return useQuery({
         queryKey: QUERY_KEYS.examDetail(examId),
         queryFn: async () => {
-            return examClient.get<ExamDetail>(`/api/v1/exams/${examId}/detail`);
+            return examClient.get<ExamDetail>(`/v1/exams/${examId}/detail`);
         },
         enabled: examId > 0 && enabled,
     });
@@ -136,7 +136,7 @@ export function useExamStatistics(examId: number) {
     return useQuery({
         queryKey: QUERY_KEYS.examStats(examId),
         queryFn: async () => {
-            return examClient.get<GradeStatistics>(`/api/v1/statistics/exams/${examId}`);
+            return examClient.get<GradeStatistics>(`/v1/statistics/exams/${examId}`);
         },
         enabled: examId > 0,
     });
@@ -151,7 +151,7 @@ export function useStudentGrades(examId: number, params?: { page?: number; size?
             if (params?.size) searchParams.set('size', String(params.size));
 
             const query = searchParams.toString();
-            const url = `/api/v1/statistics/exams/${examId}/grades${query ? `?${query}` : ''}`;
+            const url = `/v1/statistics/exams/${examId}/grades${query ? `?${query}` : ''}`;
             return examClient.get<PaginatedResponse<StudentGrade>>(url);
         },
         enabled: examId > 0,
@@ -167,7 +167,7 @@ export function useUpdateGradingType(examId: number) {
             const payload = gradingType === 'ABSOLUTE'
                 ? { gradingType, gradeScale: 'NINE_GRADE' }
                 : { gradingType };
-            return examClient.patch(`/api/v1/exams/${examId}`, payload);
+            return examClient.patch(`/v1/exams/${examId}`, payload);
         },
         onSuccess: () => {
             // 통계, 학생 성적, 학원 비교 쿼리 무효화하여 다시 조회
@@ -187,7 +187,7 @@ export function useUpdateGradeScale(examId: number) {
 
     return useMutation({
         mutationFn: async (gradeScale: GradeScale) => {
-            return examClient.patch(`/api/v1/exams/${examId}`, { gradeScale });
+            return examClient.patch(`/v1/exams/${examId}`, { gradeScale });
         },
         onSuccess: () => {
             // 통계, 학생 성적, 학원 비교 쿼리 무효화하여 다시 조회
@@ -207,7 +207,7 @@ export function useCreateExamWithDetails() {
 
     return useMutation({
         mutationFn: async (data: CreateExamInput) => {
-            return examClient.post<Exam>('/api/v1/exams', data);
+            return examClient.post<Exam>('/v1/exams', data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
@@ -224,7 +224,7 @@ export function useDeleteExam() {
 
     return useMutation({
         mutationFn: async (examId: number) => {
-            return examClient.delete(`/api/v1/exams/${examId}`);
+            return examClient.delete(`/v1/exams/${examId}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
@@ -241,7 +241,7 @@ export function useAcademyComparison(examId: number) {
         queryKey: QUERY_KEYS.academyComparison(examId),
         queryFn: async () => {
             return examClient.get<AcademyComparison[]>(
-                `/api/v1/statistics/exams/${examId}/academy-comparison`
+                `/v1/statistics/exams/${examId}/academy-comparison`
             );
         },
         enabled: examId > 0,
@@ -265,7 +265,7 @@ export function useStudentResultSummaries(examId: number) {
         queryKey: QUERY_KEYS.resultsSummary(examId),
         queryFn: async () => {
             return examClient.get<StudentResultSummary[]>(
-                `/api/v1/statistics/exams/${examId}/results-summary`
+                `/v1/statistics/exams/${examId}/results-summary`
             );
         },
         enabled: examId > 0,
@@ -279,7 +279,7 @@ export function useExamTemplates() {
         queryKey: QUERY_KEYS.templates,
         queryFn: async () => {
             return examClient.get<PaginatedResponse<ExamTemplate>>(
-                '/api/v1/exam-templates?sort=createdAt,desc&size=100'
+                '/v1/exam-templates?sort=createdAt,desc&size=100'
             );
         },
     });
@@ -290,7 +290,7 @@ export function useCreateExamTemplate() {
 
     return useMutation({
         mutationFn: async (data: Omit<ExamTemplate, 'id' | 'totalPossibleScore' | 'createdAt' | 'updatedAt'>) => {
-            return examClient.post<ExamTemplate>('/api/v1/exam-templates', data);
+            return examClient.post<ExamTemplate>('/v1/exam-templates', data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.templates });
@@ -307,7 +307,7 @@ export function useDeleteExamTemplate() {
 
     return useMutation({
         mutationFn: async (templateId: number) => {
-            return examClient.delete(`/api/v1/exam-templates/${templateId}`);
+            return examClient.delete(`/v1/exam-templates/${templateId}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.templates });

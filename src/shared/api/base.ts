@@ -22,7 +22,7 @@ async function tryRefreshToken(): Promise<boolean> {
   }
 
   isRefreshing = true;
-  refreshPromise = fetch(`${ENV.AUTH_SERVICE_URL}/api/v1/auth/refresh`, {
+  refreshPromise = fetch(`${ENV.AUTH_SERVICE_URL}/v1/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
     headers: {

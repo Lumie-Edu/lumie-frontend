@@ -15,14 +15,14 @@ export function useTextbookFiles() {
   return useQuery({
     queryKey: QUERY_KEYS.list(),
     queryFn: () =>
-      fileClient.get<FileMetadata[]>('/api/v1/files?entityType=TEXTBOOK'),
+      fileClient.get<FileMetadata[]>('/v1/files?entityType=TEXTBOOK'),
   });
 }
 
 export function useTextbookFile(id: string) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => fileClient.get<FileMetadata>(`/api/v1/files/${id}`),
+    queryFn: () => fileClient.get<FileMetadata>(`/v1/files/${id}`),
     enabled: !!id,
   });
 }
@@ -54,7 +54,7 @@ export function useUploadFile() {
       }
 
       const response = await fetch(
-        `${ENV.FILE_SERVICE_URL}/api/v1/files/upload`,
+        `${ENV.FILE_SERVICE_URL}/v1/files/upload`,
         {
           method: 'POST',
           body: formData,
@@ -87,7 +87,7 @@ export function useDownloadFile() {
       }
 
       const response = await fetch(
-        `${ENV.FILE_SERVICE_URL}/api/v1/files/${fileId}/download`,
+        `${ENV.FILE_SERVICE_URL}/v1/files/${fileId}/download`,
         {
           method: 'GET',
           credentials: 'include',
@@ -116,7 +116,7 @@ export function useDeleteTextbookFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => fileClient.delete<void>(`/api/v1/files/${id}`),
+    mutationFn: (id: string) => fileClient.delete<void>(`/v1/files/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('파일이 삭제되었습니다.');

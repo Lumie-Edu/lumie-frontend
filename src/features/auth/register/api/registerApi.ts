@@ -6,7 +6,7 @@ export async function registerApi(
   tenantSlug?: string
 ): Promise<LoginResponse> {
   return authClient.post<LoginResponse>(
-    '/api/v1/auth/register',
+    '/v1/auth/register',
     request,
     { skipAuth: true },
     tenantSlug

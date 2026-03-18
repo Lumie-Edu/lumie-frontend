@@ -30,7 +30,7 @@ export function useSchedules(params?: ScheduleQueryParams) {
       if (params?.date) searchParams.set('date', params.date);
       const query = searchParams.toString();
       return contentClient.get<PaginatedResponse<Schedule>>(
-        `/api/v1/schedules${query ? `?${query}` : ''}`
+        `/v1/schedules${query ? `?${query}` : ''}`
       );
     },
   });
@@ -39,7 +39,7 @@ export function useSchedules(params?: ScheduleQueryParams) {
 export function useSchedule(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => contentClient.get<Schedule>(`/api/v1/schedules/${id}`),
+    queryFn: () => contentClient.get<Schedule>(`/v1/schedules/${id}`),
     enabled: id > 0,
   });
 }
@@ -49,7 +49,7 @@ export function useCreateSchedule() {
 
   return useMutation({
     mutationFn: (data: CreateScheduleInput) =>
-      contentClient.post<Schedule>('/api/v1/schedules', data),
+      contentClient.post<Schedule>('/v1/schedules', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('스케줄이 등록되었습니다.');
@@ -61,7 +61,7 @@ export function useDeleteSchedule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => contentClient.delete<void>(`/api/v1/schedules/${id}`),
+    mutationFn: (id: number) => contentClient.delete<void>(`/v1/schedules/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('스케줄이 삭제되었습니다.');
@@ -73,7 +73,7 @@ export function useDeleteSchedule() {
 export function useMyReservations() {
   return useQuery({
     queryKey: QUERY_KEYS.myReservations(),
-    queryFn: () => contentClient.get<PaginatedResponse<Reservation>>('/api/v1/reservations/my'),
+    queryFn: () => contentClient.get<PaginatedResponse<Reservation>>('/v1/reservations/my'),
   });
 }
 
@@ -82,7 +82,7 @@ export function useBookSchedule() {
 
   return useMutation({
     mutationFn: (scheduleId: number) =>
-      contentClient.post<Reservation>(`/api/v1/schedules/${scheduleId}/book`),
+      contentClient.post<Reservation>(`/v1/schedules/${scheduleId}/book`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myReservations() });
@@ -96,7 +96,7 @@ export function useCancelReservation() {
 
   return useMutation({
     mutationFn: (reservationId: number) =>
-      contentClient.delete<void>(`/api/v1/reservations/${reservationId}`),
+      contentClient.delete<void>(`/v1/reservations/${reservationId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myReservations() });

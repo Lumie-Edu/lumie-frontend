@@ -109,7 +109,7 @@ export function useSubmitOmrGrading({ onUploadProgress }: SubmitOmrGradingOption
 
             return new Promise<OmrJobResponse>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/omr/batch`);
+                xhr.open('POST', `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/omr/batch`);
                 xhr.withCredentials = true;
 
                 if (tenantSlug) {
@@ -159,7 +159,7 @@ export function useOmrJobStatus(examId: number, jobId: number | null) {
         queryKey: QUERY_KEYS.omrJob(examId, jobId ?? 0),
         queryFn: () =>
             examClient.get<OmrJobStatusResponse>(
-                `/api/v1/exams/${examId}/omr-jobs/${jobId}`
+                `/v1/exams/${examId}/omr-jobs/${jobId}`
             ),
         enabled: !!jobId,
         refetchInterval: (query) => {
@@ -180,7 +180,7 @@ export function useOmrJobs(examId: number | null) {
         queryKey: QUERY_KEYS.omrJobs(examId ?? 0),
         queryFn: () =>
             examClient.get<OmrJobStatusResponse[]>(
-                `/api/v1/exams/${examId}/omr-jobs`
+                `/v1/exams/${examId}/omr-jobs`
             ),
         enabled: !!examId,
     });
@@ -211,7 +211,7 @@ export function useGradeOmrBatch() {
             }
 
             const response = await fetch(
-                `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/omr/batch`,
+                `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/omr/batch`,
                 {
                     method: 'POST',
                     body: formData,

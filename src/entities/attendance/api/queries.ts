@@ -44,7 +44,7 @@ export function useAttendanceSessions(params?: SessionQueryParams) {
       if (params?.status) searchParams.set('status', params.status);
       const query = searchParams.toString();
       return attendanceClient.get<PaginatedResponse<AttendanceSession>>(
-        `/api/v1/attendance/sessions${query ? `?${query}` : ''}`
+        `/v1/attendance/sessions${query ? `?${query}` : ''}`
       );
     },
   });
@@ -53,7 +53,7 @@ export function useAttendanceSessions(params?: SessionQueryParams) {
 export function useAttendanceSession(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.session(id),
-    queryFn: () => attendanceClient.get<AttendanceSession>(`/api/v1/attendance/sessions/${id}`),
+    queryFn: () => attendanceClient.get<AttendanceSession>(`/v1/attendance/sessions/${id}`),
     enabled: id > 0,
   });
 }
@@ -63,7 +63,7 @@ export function useCreateSession() {
 
   return useMutation({
     mutationFn: (data: CreateSessionInput) =>
-      attendanceClient.post<AttendanceSession>('/api/v1/attendance/sessions', data),
+      attendanceClient.post<AttendanceSession>('/v1/attendance/sessions', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('출석 세션이 생성되었습니다.');
@@ -76,7 +76,7 @@ export function useCloseSession() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      attendanceClient.post<void>(`/api/v1/attendance/sessions/${id}/close`),
+      attendanceClient.post<void>(`/v1/attendance/sessions/${id}/close`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('세션이 종료되었습니다.');
@@ -89,7 +89,7 @@ export function useRegenerateCode() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      attendanceClient.post<AttendanceSession>(`/api/v1/attendance/sessions/${id}/regenerate-code`),
+      attendanceClient.post<AttendanceSession>(`/v1/attendance/sessions/${id}/regenerate-code`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('새로운 출석 코드가 생성되었습니다.');
@@ -102,7 +102,7 @@ export function useDeleteSession() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      attendanceClient.delete<void>(`/api/v1/attendance/sessions/${id}`),
+      attendanceClient.delete<void>(`/v1/attendance/sessions/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('세션이 삭제되었습니다.');
@@ -115,7 +115,7 @@ export function useAttendanceRecords(sessionId: number) {
     queryKey: QUERY_KEYS.records(sessionId),
     queryFn: () =>
       attendanceClient.get<AttendanceRecord[]>(
-        `/api/v1/attendance/sessions/${sessionId}/records`
+        `/v1/attendance/sessions/${sessionId}/records`
       ),
     enabled: sessionId > 0,
   });
@@ -127,7 +127,7 @@ export function useUpdateAttendanceStatus(sessionId: number) {
   return useMutation({
     mutationFn: ({ recordId, data }: { recordId: number; data: UpdateStatusInput }) =>
       attendanceClient.patch<void>(
-        `/api/v1/attendance/sessions/${sessionId}/records/${recordId}`,
+        `/v1/attendance/sessions/${sessionId}/records/${recordId}`,
         data
       ),
     onSuccess: () => {
@@ -144,7 +144,7 @@ export function useBulkUpdateAttendance(sessionId: number) {
   return useMutation({
     mutationFn: (data: BulkUpdateInput) =>
       attendanceClient.post<void>(
-        `/api/v1/attendance/sessions/${sessionId}/records/bulk-update`,
+        `/v1/attendance/sessions/${sessionId}/records/bulk-update`,
         data
       ),
     onSuccess: () => {
@@ -158,7 +158,7 @@ export function useBulkUpdateAttendance(sessionId: number) {
 export function useCheckIn() {
   return useMutation({
     mutationFn: (data: CheckInInput) =>
-      attendanceClient.post<CheckInResponse>('/api/v1/attendance/check-in', data),
+      attendanceClient.post<CheckInResponse>('/v1/attendance/check-in', data),
   });
 }
 
@@ -167,7 +167,7 @@ export function useStudentAttendanceRecords(studentId: number) {
     queryKey: QUERY_KEYS.studentRecords(studentId),
     queryFn: () =>
       attendanceClient.get<StudentAttendanceRecord[]>(
-        `/api/v1/attendance/students/${studentId}/records`
+        `/v1/attendance/students/${studentId}/records`
       ),
     enabled: studentId > 0,
   });
@@ -178,7 +178,7 @@ export function useStudentAttendanceStatistics(studentId: number) {
     queryKey: QUERY_KEYS.studentStatistics(studentId),
     queryFn: () =>
       attendanceClient.get<StudentAttendanceStatistics>(
-        `/api/v1/attendance/students/${studentId}/statistics`
+        `/v1/attendance/students/${studentId}/statistics`
       ),
     enabled: studentId > 0,
   });

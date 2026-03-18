@@ -48,7 +48,7 @@ export function useTranscribe() {
       }
 
       const response = await fetch(
-        `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/transcribe`,
+        `${ENV.AUDIO_SERVICE_URL}/v1/audio/transcribe`,
         {
           method: 'POST',
           body: formData,
@@ -100,7 +100,7 @@ export function useSplit() {
       }
 
       const response = await fetch(
-        `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/split`,
+        `${ENV.AUDIO_SERVICE_URL}/v1/audio/split`,
         {
           method: 'POST',
           body: formData,
@@ -157,7 +157,7 @@ export function useTranscribeAndSplit() {
       }
 
       const response = await fetch(
-        `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/transcribe-and-split`,
+        `${ENV.AUDIO_SERVICE_URL}/v1/audio/transcribe-and-split`,
         {
           method: 'POST',
           body: formData,
@@ -197,7 +197,7 @@ export function useMergeSegments() {
       outputFormat = 'wav',
     }: MergeRequest) => {
       const response = await fetch(
-        `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/merge`,
+        `${ENV.AUDIO_SERVICE_URL}/v1/audio/merge`,
         {
           method: 'POST',
           headers: {
@@ -239,14 +239,14 @@ export function getSegmentDownloadUrl(
   segmentId: number,
   format: string = 'wav'
 ): string {
-  return `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/segments/${jobId}/${segmentId}?format=${format}`;
+  return `${ENV.AUDIO_SERVICE_URL}/v1/audio/segments/${jobId}/${segmentId}?format=${format}`;
 }
 
 export function getAllSegmentsDownloadUrl(
   jobId: string,
   format: string = 'wav'
 ): string {
-  return `${ENV.AUDIO_SERVICE_URL}/api/v1/audio/segments/${jobId}/all?format=${format}`;
+  return `${ENV.AUDIO_SERVICE_URL}/v1/audio/segments/${jobId}/all?format=${format}`;
 }
 
 export { QUERY_KEYS };

@@ -20,7 +20,7 @@ export function useAcademies(params?: PaginationParams) {
       if (params?.sort) searchParams.set('sort', params.sort);
       const query = searchParams.toString();
       return academyClient.get<PaginatedResponse<Academy>>(
-        `/api/v1/academies${query ? `?${query}` : ''}`
+        `/v1/academies${query ? `?${query}` : ''}`
       );
     },
   });
@@ -29,7 +29,7 @@ export function useAcademies(params?: PaginationParams) {
 export function useAcademy(id: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => academyClient.get<Academy>(`/api/v1/academies/${id}`),
+    queryFn: () => academyClient.get<Academy>(`/v1/academies/${id}`),
     enabled: options?.enabled ?? id > 0,
   });
 }
@@ -39,7 +39,7 @@ export function useCreateAcademy() {
 
   return useMutation({
     mutationFn: (data: CreateAcademyInput) =>
-      academyClient.post<Academy>('/api/v1/academies', data),
+      academyClient.post<Academy>('/v1/academies', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학원이 생성되었습니다.');
@@ -52,7 +52,7 @@ export function useUpdateAcademy(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateAcademyInput) =>
-      academyClient.patch<Academy>(`/api/v1/academies/${id}`, data),
+      academyClient.patch<Academy>(`/v1/academies/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학원 정보가 수정되었습니다.');
@@ -65,7 +65,7 @@ export function useToggleAcademyActive(id: number) {
 
   return useMutation({
     mutationFn: (isActive: boolean) =>
-      academyClient.patch<void>(`/api/v1/academies/${id}/active?isActive=${isActive}`),
+      academyClient.patch<void>(`/v1/academies/${id}/active?isActive=${isActive}`),
     onSuccess: (_, isActive) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success(isActive ? '학원이 활성화되었습니다.' : '학원이 비활성화되었습니다.');
@@ -77,7 +77,7 @@ export function useDeleteAcademy() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => academyClient.delete<void>(`/api/v1/academies/${id}`),
+    mutationFn: (id: number) => academyClient.delete<void>(`/v1/academies/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학원이 삭제되었습니다.');

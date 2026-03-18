@@ -26,7 +26,7 @@ export function useAnnouncements(params?: AnnouncementQueryParams) {
       if (params?.academyId) searchParams.set('academyId', String(params.academyId));
       const query = searchParams.toString();
       return contentClient.get<PaginatedResponse<Announcement>>(
-        `/api/v1/announcements${query ? `?${query}` : ''}`
+        `/v1/announcements${query ? `?${query}` : ''}`
       );
     },
   });
@@ -35,7 +35,7 @@ export function useAnnouncements(params?: AnnouncementQueryParams) {
 export function useAnnouncement(id: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => contentClient.get<Announcement>(`/api/v1/announcements/${id}`),
+    queryFn: () => contentClient.get<Announcement>(`/v1/announcements/${id}`),
     enabled: options?.enabled ?? id > 0,
   });
 }
@@ -45,7 +45,7 @@ export function useCreateAnnouncement() {
 
   return useMutation({
     mutationFn: (data: CreateAnnouncementInput) =>
-      contentClient.post<Announcement>('/api/v1/announcements', data),
+      contentClient.post<Announcement>('/v1/announcements', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('공지사항이 등록되었습니다.');
@@ -58,7 +58,7 @@ export function useUpdateAnnouncement(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateAnnouncementInput) =>
-      contentClient.patch<Announcement>(`/api/v1/announcements/${id}`, data),
+      contentClient.patch<Announcement>(`/v1/announcements/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('공지사항이 수정되었습니다.');
@@ -70,7 +70,7 @@ export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => contentClient.delete<void>(`/api/v1/announcements/${id}`),
+    mutationFn: (id: number) => contentClient.delete<void>(`/v1/announcements/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('공지사항이 삭제되었습니다.');

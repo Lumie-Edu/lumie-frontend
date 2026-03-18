@@ -48,7 +48,7 @@ export function useExams(params?: ExamQueryParams) {
       if (params?.status) searchParams.set('status', params.status);
       const query = searchParams.toString();
       return examClient.get<PaginatedResponse<Exam>>(
-        `/api/v1/exams${query ? `?${query}` : ''}`
+        `/v1/exams${query ? `?${query}` : ''}`
       );
     },
   });
@@ -57,7 +57,7 @@ export function useExams(params?: ExamQueryParams) {
 export function useExam(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => examClient.get<Exam>(`/api/v1/exams/${id}`),
+    queryFn: () => examClient.get<Exam>(`/v1/exams/${id}`),
     enabled: id > 0,
   });
 }
@@ -67,7 +67,7 @@ export function useCreateExam() {
 
   return useMutation({
     mutationFn: (data: CreateExamInput) =>
-      examClient.post<Exam>('/api/v1/exams', data),
+      examClient.post<Exam>('/v1/exams', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('시험이 생성되었습니다.');
@@ -80,7 +80,7 @@ export function useUpdateExam(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateExamInput) =>
-      examClient.patch<Exam>(`/api/v1/exams/${id}`, data),
+      examClient.patch<Exam>(`/v1/exams/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('시험 정보가 수정되었습니다.');
@@ -92,7 +92,7 @@ export function usePublishExam(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => examClient.post<Exam>(`/api/v1/exams/${id}/publish`),
+    mutationFn: () => examClient.post<Exam>(`/v1/exams/${id}/publish`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('시험이 공개되었습니다.');
@@ -104,7 +104,7 @@ export function useCloseExam(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => examClient.post<Exam>(`/api/v1/exams/${id}/close`),
+    mutationFn: () => examClient.post<Exam>(`/v1/exams/${id}/close`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('시험이 종료되었습니다.');
@@ -116,7 +116,7 @@ export function useDeleteExam() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => examClient.delete<void>(`/api/v1/exams/${id}`),
+    mutationFn: (id: number) => examClient.delete<void>(`/v1/exams/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('시험이 삭제되었습니다.');
@@ -129,7 +129,7 @@ export function useExamResults(examId: number) {
   return useQuery({
     queryKey: QUERY_KEYS.results(examId),
     queryFn: () =>
-      examClient.get<ExamResult[]>(`/api/v1/exams/${examId}/results`),
+      examClient.get<ExamResult[]>(`/v1/exams/${examId}/results`),
     enabled: examId > 0,
   });
 }
@@ -139,7 +139,7 @@ export function useSubmitExamResult(examId: number) {
 
   return useMutation({
     mutationFn: (data: SubmitExamResultInput) =>
-      examClient.post<ExamResult>(`/api/v1/exams/${examId}/results`, data),
+      examClient.post<ExamResult>(`/v1/exams/${examId}/results`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.results(examId) });
       toast.success('성적이 등록되었습니다.');
@@ -152,7 +152,7 @@ export function useMyExamResults() {
   return useQuery({
     queryKey: QUERY_KEYS.studentResults(),
     queryFn: () =>
-      examClient.get<PaginatedResponse<ExamResult>>('/api/v1/exams/my-results'),
+      examClient.get<PaginatedResponse<ExamResult>>('/v1/exams/my-results'),
   });
 }
 
@@ -160,7 +160,7 @@ export function useMyExamResults() {
 export function useStudentExamResults(studentId: number) {
   return useQuery({
     queryKey: QUERY_KEYS.studentExamResults(studentId),
-    queryFn: () => examClient.get<ExamResult[]>(`/api/v1/students/${studentId}/results`),
+    queryFn: () => examClient.get<ExamResult[]>(`/v1/students/${studentId}/results`),
     enabled: studentId > 0,
   });
 }
@@ -169,7 +169,7 @@ export function useStudentExamResults(studentId: number) {
 export function useQuestionResults(resultId: number) {
   return useQuery({
     queryKey: QUERY_KEYS.questionResults(resultId),
-    queryFn: () => examClient.get<QuestionResult[]>(`/api/v1/results/${resultId}/questions`),
+    queryFn: () => examClient.get<QuestionResult[]>(`/v1/results/${resultId}/questions`),
     enabled: resultId > 0,
   });
 }
@@ -180,7 +180,7 @@ export function buildReportUrl(
   studentId: number,
   examId: number,
 ) {
-  return `${baseUrl}/api/v1/reports/students/${studentId}/exams/${examId}`;
+  return `${baseUrl}/v1/reports/students/${studentId}/exams/${examId}`;
 }
 
 interface GenerateReportParams {

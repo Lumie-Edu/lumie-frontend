@@ -29,7 +29,7 @@ export function useStudents(params?: StudentQueryParams) {
       if (params?.search) searchParams.set('search', params.search);
       const query = searchParams.toString();
       return academyClient.get<PaginatedResponse<Student>>(
-        `/api/v1/students${query ? `?${query}` : ''}`
+        `/v1/students${query ? `?${query}` : ''}`
       );
     },
   });
@@ -38,7 +38,7 @@ export function useStudents(params?: StudentQueryParams) {
 export function useStudent(id: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => academyClient.get<Student>(`/api/v1/students/${id}`),
+    queryFn: () => academyClient.get<Student>(`/v1/students/${id}`),
     enabled: options?.enabled ?? id > 0,
   });
 }
@@ -48,7 +48,7 @@ export function useCreateStudent() {
 
   return useMutation({
     mutationFn: (data: CreateStudentInput) =>
-      academyClient.post<Student>('/api/v1/students', data),
+      academyClient.post<Student>('/v1/students', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학생이 등록되었습니다.');
@@ -61,7 +61,7 @@ export function useUpdateStudent(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateStudentInput) =>
-      academyClient.patch<Student>(`/api/v1/students/${id}`, data),
+      academyClient.patch<Student>(`/v1/students/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학생 정보가 수정되었습니다.');
@@ -73,7 +73,7 @@ export function useDeactivateStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => academyClient.post<void>(`/api/v1/students/${id}/deactivate`),
+    mutationFn: (id: number) => academyClient.post<void>(`/v1/students/${id}/deactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학생이 퇴원 처리되었습니다.');
@@ -85,7 +85,7 @@ export function useReactivateStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => academyClient.post<void>(`/api/v1/students/${id}/reactivate`),
+    mutationFn: (id: number) => academyClient.post<void>(`/v1/students/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학생이 재등록되었습니다.');
@@ -97,7 +97,7 @@ export function useDeleteStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => academyClient.delete<void>(`/api/v1/students/${id}`),
+    mutationFn: (id: number) => academyClient.delete<void>(`/v1/students/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('학생이 삭제되었습니다.');
@@ -111,7 +111,7 @@ export function useBulkImportStudents() {
   return useMutation({
     mutationFn: (data: BulkImportStudentInput) =>
       academyClient.post<{ imported: number; failed: number }>(
-        '/api/v1/students/bulk',
+        '/v1/students/bulk',
         data
       ),
     onSuccess: (result) => {
@@ -133,7 +133,7 @@ export function useBatchDeactivate() {
 
   return useMutation({
     mutationFn: (ids: number[]) =>
-      academyClient.post<BatchOperationResult>('/api/v1/students/batch/deactivate', { ids }),
+      academyClient.post<BatchOperationResult>('/v1/students/batch/deactivate', { ids }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       if (result.failed > 0) {
@@ -150,7 +150,7 @@ export function useBatchReactivate() {
 
   return useMutation({
     mutationFn: (ids: number[]) =>
-      academyClient.post<BatchOperationResult>('/api/v1/students/batch/reactivate', { ids }),
+      academyClient.post<BatchOperationResult>('/v1/students/batch/reactivate', { ids }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       if (result.failed > 0) {
@@ -167,7 +167,7 @@ export function useBatchDelete() {
 
   return useMutation({
     mutationFn: (ids: number[]) =>
-      academyClient.post<BatchOperationResult>('/api/v1/students/batch/delete', { ids }),
+      academyClient.post<BatchOperationResult>('/v1/students/batch/delete', { ids }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       if (result.failed > 0) {

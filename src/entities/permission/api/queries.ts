@@ -21,7 +21,7 @@ const QUERY_KEYS = {
 export function usePermissions() {
   return useQuery({
     queryKey: QUERY_KEYS.list(),
-    queryFn: () => adminClient.get<Permission[]>('/api/v1/permissions'),
+    queryFn: () => adminClient.get<Permission[]>('/v1/permissions'),
   });
 }
 
@@ -30,7 +30,7 @@ export function usePermissionsByCategory() {
     queryKey: QUERY_KEYS.categories(),
     queryFn: async () => {
       const map = await adminClient.get<Record<string, Permission[]>>(
-        '/api/v1/permissions/categories'
+        '/v1/permissions/categories'
       );
       return Object.entries(map).map(
         ([category, permissions]): PermissionsByCategory => ({
@@ -47,7 +47,7 @@ export function usePositionPermissions(positionId: number) {
     queryKey: QUERY_KEYS.positionPermissions(positionId),
     queryFn: () =>
       adminClient.get<PositionPermissionEntry[]>(
-        `/api/v1/positions/${positionId}/permissions`
+        `/v1/positions/${positionId}/permissions`
       ),
     enabled: positionId > 0,
   });
@@ -58,7 +58,7 @@ export function useAdminPermissions(adminId: number) {
     queryKey: QUERY_KEYS.adminPermissions(adminId),
     queryFn: () =>
       adminClient.get<PositionPermissionEntry[]>(
-        `/api/v1/admins/${adminId}/permissions`
+        `/v1/admins/${adminId}/permissions`
       ),
     enabled: adminId > 0,
   });
@@ -70,7 +70,7 @@ export function useSetAdminPermissions(adminId: number) {
   return useMutation({
     mutationFn: (permissions: Record<string, AccessLevel>) =>
       adminClient.put<void>(
-        `/api/v1/admins/${adminId}/permissions`,
+        `/v1/admins/${adminId}/permissions`,
         { permissions }
       ),
     onSuccess: () => {
@@ -86,7 +86,7 @@ export function useSetPositionPermissions(positionId: number) {
   return useMutation({
     mutationFn: (permissions: Record<string, AccessLevel>) =>
       adminClient.put<void>(
-        `/api/v1/positions/${positionId}/permissions`,
+        `/v1/positions/${positionId}/permissions`,
         { permissions }
       ),
     onSuccess: () => {

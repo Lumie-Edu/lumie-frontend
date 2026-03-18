@@ -28,7 +28,7 @@ export function useEmployees(params?: EmployeeQueryParams) {
       if (params?.filter?.search) searchParams.set('search', params.filter.search);
       const query = searchParams.toString();
       return adminClient.get<PaginatedResponse<Employee>>(
-        `/api/v1/admins${query ? `?${query}` : ''}`
+        `/v1/admins${query ? `?${query}` : ''}`
       );
     },
   });
@@ -37,7 +37,7 @@ export function useEmployees(params?: EmployeeQueryParams) {
 export function useEmployee(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => adminClient.get<Employee>(`/api/v1/admins/${id}`),
+    queryFn: () => adminClient.get<Employee>(`/v1/admins/${id}`),
     enabled: id > 0,
   });
 }
@@ -47,7 +47,7 @@ export function useCreateEmployee() {
 
   return useMutation({
     mutationFn: (data: CreateEmployeeInput) =>
-      adminClient.post<Employee>('/api/v1/admins', data),
+      adminClient.post<Employee>('/v1/admins', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 등록되었습니다.');
@@ -60,7 +60,7 @@ export function useUpdateEmployee(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateEmployeeInput) =>
-      adminClient.put<Employee>(`/api/v1/admins/${id}`, data),
+      adminClient.put<Employee>(`/v1/admins/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원 정보가 수정되었습니다.');
@@ -73,7 +73,7 @@ export function useDeactivateEmployee() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      adminClient.post<void>(`/api/v1/admins/${id}/deactivate`),
+      adminClient.post<void>(`/v1/admins/${id}/deactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 비활성화되었습니다.');
@@ -86,7 +86,7 @@ export function useReactivateEmployee() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      adminClient.post<void>(`/api/v1/admins/${id}/reactivate`),
+      adminClient.post<void>(`/v1/admins/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 재활성화되었습니다.');
@@ -99,7 +99,7 @@ export function useTerminateEmployee() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      adminClient.post<void>(`/api/v1/admins/${id}/terminate`),
+      adminClient.post<void>(`/v1/admins/${id}/terminate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('퇴직 처리되었습니다.');
@@ -111,7 +111,7 @@ export function useDeleteEmployee() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => adminClient.delete<void>(`/api/v1/admins/${id}`),
+    mutationFn: (id: number) => adminClient.delete<void>(`/v1/admins/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직원이 삭제되었습니다.');

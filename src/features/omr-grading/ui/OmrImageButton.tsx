@@ -23,7 +23,7 @@ interface OmrImageButtonProps {
 async function fetchOmrImageBlob(examId: number, resultId: number): Promise<string> {
     const tenantSlug = storage.getTenantSlug();
     const response = await fetch(
-        `${ENV.EXAM_SERVICE_URL}/api/v1/exams/${examId}/results/${resultId}/omr-image`,
+        `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/${resultId}/omr-image`,
         {
             credentials: 'include',
             headers: tenantSlug ? { 'X-Tenant-Slug': tenantSlug } : {},

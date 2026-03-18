@@ -11,7 +11,7 @@ const QUERY_KEYS = {
 export function useActivePositions() {
   return useQuery({
     queryKey: QUERY_KEYS.active(),
-    queryFn: () => adminClient.get<Position[]>('/api/v1/positions/active'),
+    queryFn: () => adminClient.get<Position[]>('/v1/positions/active'),
   });
 }
 
@@ -20,7 +20,7 @@ export function useCreatePosition() {
 
   return useMutation({
     mutationFn: (data: CreatePositionInput) =>
-      adminClient.post<Position>('/api/v1/positions', data),
+      adminClient.post<Position>('/v1/positions', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직책이 생성되었습니다.');
@@ -33,7 +33,7 @@ export function useUpdatePosition(id: number) {
 
   return useMutation({
     mutationFn: (data: CreatePositionInput) =>
-      adminClient.put<Position>(`/api/v1/positions/${id}`, data),
+      adminClient.put<Position>(`/v1/positions/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직책이 수정되었습니다.');
@@ -46,7 +46,7 @@ export function useDeactivatePosition() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      adminClient.post<void>(`/api/v1/positions/${id}/deactivate`),
+      adminClient.post<void>(`/v1/positions/${id}/deactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직책이 비활성화되었습니다.');
@@ -59,7 +59,7 @@ export function useReactivatePosition() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      adminClient.post<void>(`/api/v1/positions/${id}/reactivate`),
+      adminClient.post<void>(`/v1/positions/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직책이 활성화되었습니다.');
@@ -71,7 +71,7 @@ export function useDeletePosition() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => adminClient.delete<void>(`/api/v1/positions/${id}`),
+    mutationFn: (id: number) => adminClient.delete<void>(`/v1/positions/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('직책이 삭제되었습니다.');

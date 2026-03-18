@@ -26,7 +26,7 @@ export function useResources(params?: ResourceQueryParams) {
       if (params?.academyId) searchParams.set('academyId', String(params.academyId));
       const query = searchParams.toString();
       return contentClient.get<PaginatedResponse<Resource>>(
-        `/api/v1/announcements${query ? `?${query}` : ''}`
+        `/v1/announcements${query ? `?${query}` : ''}`
       );
     },
   });
@@ -35,7 +35,7 @@ export function useResources(params?: ResourceQueryParams) {
 export function useResource(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.detail(id),
-    queryFn: () => contentClient.get<Resource>(`/api/v1/announcements/${id}`),
+    queryFn: () => contentClient.get<Resource>(`/v1/announcements/${id}`),
     enabled: id > 0,
   });
 }
@@ -45,7 +45,7 @@ export function useCreateResource() {
 
   return useMutation({
     mutationFn: (data: CreateResourceInput) =>
-      contentClient.post<Resource>('/api/v1/announcements', {
+      contentClient.post<Resource>('/v1/announcements', {
         ...data,
         isItAssetAnnouncement: true,
       }),
@@ -61,7 +61,7 @@ export function useUpdateResource(id: number) {
 
   return useMutation({
     mutationFn: (data: UpdateResourceInput) =>
-      contentClient.patch<Resource>(`/api/v1/announcements/${id}`, data),
+      contentClient.patch<Resource>(`/v1/announcements/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('자료가 수정되었습니다.');
@@ -73,7 +73,7 @@ export function useDeleteResource() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => contentClient.delete<void>(`/api/v1/announcements/${id}`),
+    mutationFn: (id: number) => contentClient.delete<void>(`/v1/announcements/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
       toast.success('자료가 삭제되었습니다.');
