@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://dev.lumie0213.kro.kr';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://dev.lumie-edu.com';
 
 async function proxyRequest(request: NextRequest) {
   const url = new URL(request.url);
