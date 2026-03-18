@@ -7,7 +7,7 @@ import { useSessionStore } from '@/entities/session';
 
 async function logoutApi(): Promise<void> {
   // Tenant slug will be retrieved from session storage automatically
-  return authClient.post<void>('/v1/auth/logout', undefined, undefined);
+  return authClient.post<void>('/v1/logout', undefined, undefined);
 }
 
 export function useLogout() {
