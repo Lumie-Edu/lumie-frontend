@@ -13,6 +13,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
     return null;
   }
 
+  // Hide intermediate AI "thinking" messages (tool call steps)
+  if (message.role === 'ASSISTANT' && message.toolCalls) {
+    return null;
+  }
+
   const isUser = message.role === 'USER';
 
   return (
