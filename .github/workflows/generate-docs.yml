@@ -1,0 +1,25 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'app/**'
+      - 'package.json'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-gen-frontend
+  cancel-in-progress: true
+
+jobs:
+  generate-docs:
+    uses: Lumie-Edu/lumie-document/.github/workflows/generate-docs-reusable.yml@main
+    with:
+      source-repo: lumie-frontend
+      docs-section: frontend
+      repomix-ignore: '**/node_modules/**,**/.next/**,**/dist/**,**/*.lock'
+    secrets:
+      anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+      docs-github-token: ${{ secrets.DOCS_GITHUB_TOKEN }}
