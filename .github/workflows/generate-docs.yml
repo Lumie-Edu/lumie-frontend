@@ -1,12 +1,6 @@
 name: Generate Documentation
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'app/**'
-      - 'package.json'
   workflow_dispatch:
 
 concurrency:
