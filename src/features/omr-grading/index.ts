@@ -1,5 +1,4 @@
 export { ExamSelectionPanel } from './ui/ExamSelectionPanel';
-export { OmrUploadPanel } from './ui/OmrUploadPanel';
 export { ExamSidebar } from './ui/ExamSidebar';
 export { OmrProWorkspace } from './ui/OmrProWorkspace';
 export { OmrNotificationBell } from './ui/OmrNotificationBell';
