@@ -21,5 +21,5 @@ jobs:
       docs-section: frontend
       repomix-ignore: '**/node_modules/**,**/.next/**,**/dist/**,**/*.lock'
     secrets:
-      anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+      gemini-api-key: ${{ secrets.GOOGLE_API_KEY }}
       docs-github-token: ${{ secrets.DOCS_GITHUB_TOKEN }}
