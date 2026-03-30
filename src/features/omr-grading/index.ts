@@ -6,8 +6,6 @@ export { OmrNotificationBell } from './ui/OmrNotificationBell';
 export { OmrImageButton } from './ui/OmrImageButton';
 export { OmrJobTrackerProvider, useOmrJobTracker } from './providers/OmrJobTrackerProvider';
 export {
-    useGradeOmr,
-    useGradeOmrBatch,
     useSubmitOmrGrading,
     useOmrJobStatus,
     useOmrJobs,

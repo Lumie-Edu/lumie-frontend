@@ -1,10 +1,8 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { examClient } from '@/src/shared/api/base';
-import { ENV } from '@/src/shared/config/env';
-import { storage } from '@/src/shared/lib/storage';
 
 const MAX_IMAGES = 200;
 
@@ -34,6 +32,17 @@ interface OmrQuestionResult {
 interface OmrGradingRequest {
     examId: number;
     images: File[];
+}
+
+interface PresignedUpload {
+    fileName: string;
+    objectKey: string;
+    uploadUrl: string;
+}
+
+interface OmrPresignResponse {
+    batchKey: string;
+    uploads: PresignedUpload[];
 }
 
 interface OmrGradingResultWithFile extends OmrGradingResult {
@@ -91,7 +100,10 @@ interface SubmitOmrGradingOptions {
 }
 
 /**
- * 비동기 배치 OMR 채점 제출 → jobId 반환 (XMLHttpRequest로 upload progress 지원)
+ * Presigned URL 방식 비동기 배치 OMR 채점 제출
+ * 1. /presign → presigned PUT URL 수신
+ * 2. 브라우저에서 MinIO로 직접 병렬 업로드 (동시 6개)
+ * 3. /confirm → Job 생성 + 채점 시작
  */
 export function useSubmitOmrGrading({ onUploadProgress }: SubmitOmrGradingOptions = {}) {
     return useMutation({
@@ -100,47 +112,70 @@ export function useSubmitOmrGrading({ onUploadProgress }: SubmitOmrGradingOption
                 throw new Error(`이미지는 최대 ${MAX_IMAGES}개까지 가능합니다.`);
             }
 
-            const formData = new FormData();
-            images.forEach((image) => {
-                formData.append('images', image);
-            });
+            // Step 1: Request presigned URLs
+            const presignResponse = await examClient.post<OmrPresignResponse>(
+                `/v1/exams/${examId}/results/omr/batch/presign`,
+                { fileNames: images.map((f) => f.name) }
+            );
 
-            const tenantSlug = storage.getTenantSlug();
+            // Step 2: Upload files directly to MinIO via presigned URLs
+            const CONCURRENCY = 6;
+            let completedCount = 0;
+            let aborted = false;
+            let firstError: Error | null = null;
 
-            return new Promise<OmrJobResponse>((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/omr/batch`);
-                xhr.withCredentials = true;
+            const uploadFile = async (file: File, upload: PresignedUpload) => {
+                if (aborted) return;
+                return new Promise<void>((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', upload.uploadUrl);
+                    xhr.setRequestHeader('Content-Type', file.type || 'image/jpeg');
 
-                if (tenantSlug) {
-                    xhr.setRequestHeader('X-Tenant-Slug', tenantSlug);
-                }
-
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        onUploadProgress?.(percent);
-                    }
-                };
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(JSON.parse(xhr.responseText) as OmrJobResponse);
-                    } else {
-                        let errorMessage = 'OMR 채점 제출에 실패했습니다.';
-                        try {
-                            const errorJson = JSON.parse(xhr.responseText);
-                            errorMessage = errorJson.detail || errorJson.message || errorMessage;
-                        } catch {
-                            // ignore parse error
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            completedCount++;
+                            onUploadProgress?.(Math.round((completedCount / images.length) * 100));
+                            resolve();
+                        } else {
+                            reject(new Error(`업로드 실패: ${file.name} (${xhr.status})`));
                         }
-                        reject(new Error(errorMessage));
-                    }
-                };
+                    };
 
-                xhr.onerror = () => reject(new Error('네트워크 오류가 발생했습니다.'));
-                xhr.send(formData);
+                    xhr.onerror = () => reject(new Error(`네트워크 오류: ${file.name}`));
+                    xhr.send(file);
+                });
+            };
+
+            // Concurrency-limited parallel upload
+            const queue = presignResponse.uploads.map((u, i) => ({ file: images[i], upload: u }));
+            const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+                while (queue.length > 0) {
+                    if (aborted) return;
+                    const item = queue.shift()!;
+                    try {
+                        await uploadFile(item.file, item.upload);
+                    } catch (e) {
+                        aborted = true;
+                        firstError = e as Error;
+                    }
+                }
             });
+            await Promise.all(workers);
+
+            if (firstError) {
+                throw firstError;
+            }
+
+            // Step 3: Confirm upload and create grading job
+            const jobResponse = await examClient.post<OmrJobResponse>(
+                `/v1/exams/${examId}/results/omr/batch/confirm`,
+                {
+                    batchKey: presignResponse.batchKey,
+                    objectKeys: presignResponse.uploads.map((u) => u.objectKey),
+                }
+            );
+
+            return jobResponse;
         },
         onSuccess: () => {
             toast.success('채점 요청이 제출되었습니다. 백그라운드에서 처리 중입니다.');
@@ -185,73 +220,6 @@ export function useOmrJobs(examId: number | null) {
         enabled: !!examId,
     });
 }
-
-/**
- * 배치 OMR 채점 + DB 저장 (동기 방식 - 하위 호환)
- * @deprecated useSubmitOmrGrading 사용 권장
- */
-export function useGradeOmrBatch() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async ({ examId, images }: OmrGradingRequest) => {
-            if (images.length > MAX_IMAGES) {
-                throw new Error(`이미지는 최대 ${MAX_IMAGES}개까지 가능합니다.`);
-            }
-
-            const formData = new FormData();
-            images.forEach((image) => {
-                formData.append('images', image);
-            });
-
-            const tenantSlug = storage.getTenantSlug();
-            const headers: HeadersInit = {};
-            if (tenantSlug) {
-                headers['X-Tenant-Slug'] = tenantSlug;
-            }
-
-            const response = await fetch(
-                `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/omr/batch`,
-                {
-                    method: 'POST',
-                    body: formData,
-                    headers,
-                    credentials: 'include',
-                }
-            );
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                let errorMessage = 'OMR 채점에 실패했습니다.';
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.detail || errorJson.message || errorMessage;
-                } catch {
-                    // ignore parse error
-                }
-                throw new Error(errorMessage);
-            }
-
-            return response.json() as Promise<OmrBatchResponse>;
-        },
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
-            if (data.savedCount === data.successCount && data.failCount === 0) {
-                toast.success(`${data.savedCount}개의 OMR 채점 및 저장이 완료되었습니다.`);
-            } else if (data.savedCount > 0) {
-                toast.warning(`채점 ${data.successCount}개, 저장 ${data.savedCount}개, 실패 ${data.failCount}개`);
-            } else {
-                toast.error(`채점은 완료되었으나 저장된 결과가 없습니다.`);
-            }
-        },
-        onError: (error: Error) => {
-            toast.error(error.message);
-        },
-    });
-}
-
-// 기존 useGradeOmr는 useGradeOmrBatch를 사용하도록 alias
-export const useGradeOmr = useGradeOmrBatch;
 
 export { MAX_IMAGES };
 
