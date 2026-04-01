@@ -8,10 +8,18 @@ import { useLogin } from '../model/useLogin';
 import { ApiError } from '@/src/shared/types/api';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuthModal } from '@/src/shared/providers/AuthModalProvider';
+import { storage } from '@/src/shared/lib/storage';
+import { ENV } from '@/src/shared/config/env';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { openRegister } = useAuthModal();
+
+  const handleSocialLogin = (idpHint: string) => {
+    const tenantSlug = storage.getTenantSlug();
+    if (!tenantSlug) return;
+    window.location.href = `${ENV.AUTH_SERVICE_URL}/v1/oauth2/keycloak/authorize?tenant=${encodeURIComponent(tenantSlug)}&idp_hint=${encodeURIComponent(idpHint)}`;
+  };
   const {
     register,
     handleSubmit,
@@ -100,6 +108,7 @@ export function LoginForm() {
           {/* Google */}
           <button
             type="button"
+            onClick={() => handleSocialLogin('google')}
             className="w-14 h-12 flex items-center justify-center border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -133,6 +142,7 @@ export function LoginForm() {
           {/* Kakao */}
           <button
             type="button"
+            onClick={() => handleSocialLogin('kakao')}
             className="w-14 h-12 flex items-center justify-center border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors bg-[#FEE500]"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000000">
