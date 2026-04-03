@@ -14,6 +14,7 @@ import { useActivePositions } from '@/entities/position';
 import { useAcademies } from '@/entities/academy';
 import { PositionManagerDialog } from '../../manage-positions';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -54,7 +55,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Users,
 } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { CreateStaffForm } from '../../create-staff/ui/CreateStaffForm';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
 
@@ -287,12 +290,7 @@ export function StaffList() {
   return (
     <div className="space-y-4 smalltablet:space-y-6">
       {/* 헤더 + 검색 + 액션 */}
-      <div className="flex flex-wrap items-center gap-2 smalltablet:gap-3">
-        <h1 className="text-2xl smalltablet:text-3xl font-bold whitespace-nowrap">직원 관리</h1>
-        <Badge variant="secondary" className="text-base px-3 py-1">
-          총 {totalEmployees}명
-        </Badge>
-        <div className="flex-1" />
+      <PageListHeader title="직원 관리" count={totalEmployees} countUnit="명">
         <div className="relative hidden smalltablet:block smalltablet:w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -367,7 +365,7 @@ export function StaffList() {
             <CreateStaffForm onSuccess={() => setIsCreateOpen(false)} />
           </DialogContent>
         </Dialog>
-      </div>
+      </PageListHeader>
 
       {/* 배치 액션 */}
       {someSelected && (
@@ -398,16 +396,17 @@ export function StaffList() {
       {isLoading ? (
         <StaffListSkeleton viewMode={viewMode} />
       ) : employees.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg">
-          <p className="text-muted-foreground mb-2">
-            {searchTerm || selectedPosition !== 'all' || selectedAcademy !== 'all'
-              ? '검색된 직원이 없습니다.'
-              : '등록된 직원이 없습니다.'}
-          </p>
-          {!searchTerm && selectedPosition === 'all' && selectedAcademy === 'all' && (
-            <p className="text-sm text-muted-foreground">새 직원을 추가해보세요.</p>
-          )}
-        </div>
+        <EmptyState
+          icon={Users}
+          message={searchTerm || selectedPosition !== 'all' || selectedAcademy !== 'all'
+            ? '검색된 직원이 없습니다.'
+            : '등록된 직원이 없습니다.'}
+          description={!searchTerm && selectedPosition === 'all' && selectedAcademy === 'all'
+            ? '새 직원을 추가해보세요.'
+            : undefined}
+          actionLabel="직원 추가"
+          onAction={() => setIsCreateOpen(true)}
+        />
       ) : viewMode === 'card' ? (
         <PersonCardGrid
           items={employees.map((emp) => ({

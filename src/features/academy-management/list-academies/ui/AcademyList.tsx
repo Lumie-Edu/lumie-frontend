@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAcademies, useDeleteAcademy, CreateAcademyInput, createAcademySchema, useCreateAcademy } from '@/entities/academy';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -90,40 +92,31 @@ export function AcademyList() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">학원 관리</h1>
-          <Badge variant="secondary" className="text-base px-3 py-1">
-            총 {totalAcademies}개
-          </Badge>
+      <PageListHeader title="학원 관리" count={totalAcademies} countUnit="개">
+        <div className="relative order-last basis-full smalltablet:order-none smalltablet:basis-auto w-full smalltablet:w-[250px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="학원명 또는 주소로 검색..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
         </div>
-
-        <div className="flex gap-2">
-          <div className="relative w-full sm:w-[250px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="학원명 또는 주소로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                학원 추가
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>새 학원 등록</DialogTitle>
-              </DialogHeader>
-              <CreateAcademyFormDialog onSuccess={() => setIsCreateOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              학원 추가
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>새 학원 등록</DialogTitle>
+            </DialogHeader>
+            <CreateAcademyFormDialog onSuccess={() => setIsCreateOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      </PageListHeader>
 
       {/* 카드 그리드 */}
       {isLoading ? (
@@ -133,15 +126,13 @@ export function AcademyList() {
           ))}
         </div>
       ) : filteredAcademies.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg">
-          <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground mb-2">
-            {searchTerm ? '검색된 학원이 없습니다.' : '등록된 학원이 없습니다.'}
-          </p>
-          {!searchTerm && (
-            <p className="text-sm text-muted-foreground">새 학원을 추가해보세요.</p>
-          )}
-        </div>
+        <EmptyState
+          icon={Building2}
+          message={searchTerm ? '검색된 학원이 없습니다.' : '등록된 학원이 없습니다.'}
+          description={!searchTerm ? '새 학원을 추가해보세요.' : undefined}
+          actionLabel="학원 추가"
+          onAction={() => setIsCreateOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredAcademies.map((academy) => (

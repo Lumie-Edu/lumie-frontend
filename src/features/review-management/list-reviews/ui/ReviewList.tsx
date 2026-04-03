@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useReviews, useDeleteReview } from '@/entities/review';
 import { Card, CardContent } from '@/src/shared/ui/Card';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Trash2, Star, MessageSquareText } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
+import { ReviewPopupToggle } from '../../toggle-popup/ui/ReviewPopupToggle';
 
 export function ReviewList() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -42,20 +45,16 @@ export function ReviewList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold">학생 리뷰</h2>
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            총 {data?.totalElements ?? 0}개
-          </Badge>
-        </div>
-      </div>
+      <PageListHeader title="리뷰 관리" count={data?.totalElements ?? 0} countUnit="개">
+        <ReviewPopupToggle />
+      </PageListHeader>
 
       {reviews.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <MessageSquareText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">등록된 리뷰가 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={MessageSquareText}
+          message="등록된 리뷰가 없습니다."
+          description="학생들이 리뷰를 남기면 이곳에 표시됩니다."
+        />
       ) : (
         <div className="space-y-3">
           {reviews.map((review) => (

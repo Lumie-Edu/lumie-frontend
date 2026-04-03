@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResources, useDeleteResource } from '@/entities/resource';
 import { useAcademies } from '@/entities/academy';
-import { Button } from '@/src/shared/ui/Button';
-import { Card, CardContent } from '@/src/shared/ui/Card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,7 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Plus, Trash2, Pin, FolderOpen } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
+import { CreateResourceModal } from '../../create-resource/ui/CreateResourceModal';
 
 interface ResourceListProps {
   isAdmin?: boolean;
@@ -29,6 +31,17 @@ export function ResourceList({ isAdmin = false }: ResourceListProps) {
   });
   const { mutate: deleteResource, isPending: isDeleting } = useDeleteResource();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const basePath = isAdmin ? '/admin/resources' : '/dashboard/resources';
+  const academies = academiesData?.content ?? [];
+  const resources = data?.content ?? [];
+
+  const academyMap = useMemo(() => {
+    const map = new Map<number, string>();
+    academies.forEach((a) => map.set(a.id, a.name));
+    return map;
+  }, [academies]);
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,10 +52,6 @@ export function ResourceList({ isAdmin = false }: ResourceListProps) {
       });
     }
   };
-
-  const basePath = isAdmin ? '/admin/resources' : '/dashboard/resources';
-  const academies = academiesData?.content ?? [];
-  const resources = data?.content ?? [];
 
   if (isLoading) {
     return (
@@ -61,16 +70,12 @@ export function ResourceList({ isAdmin = false }: ResourceListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">자료실</h1>
-          <Badge variant="secondary" className="text-lg px-3 py-1">
-            총 {data?.totalElements ?? 0}개
-          </Badge>
-          {isAdmin && (
+    <div className="space-y-6">
+      <PageListHeader title="자료실" count={data?.totalElements ?? 0} countUnit="개">
+        {isAdmin && (
+          <>
             <Select value={selectedAcademy} onValueChange={setSelectedAcademy}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="order-last basis-full smalltablet:order-none smalltablet:basis-auto w-full smalltablet:w-[180px]">
                 <SelectValue placeholder="학원 선택" />
               </SelectTrigger>
               <SelectContent>
@@ -82,59 +87,82 @@ export function ResourceList({ isAdmin = false }: ResourceListProps) {
                 ))}
               </SelectContent>
             </Select>
-          )}
-        </div>
-        {isAdmin && (
-          <Button onClick={() => router.push(`${basePath}/new`)}>
-            <Plus className="w-4 h-4 mr-2" />
-            자료 등록
-          </Button>
+            <Button onClick={() => setIsCreateOpen(true)} className="shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              자료 등록
+            </Button>
+          </>
         )}
-      </div>
+      </PageListHeader>
 
       {resources.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <FolderOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">등록된 자료가 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          message="등록된 자료가 없습니다."
+          actionLabel={isAdmin ? '자료 등록' : undefined}
+          onAction={isAdmin ? () => setIsCreateOpen(true) : undefined}
+        />
       ) : (
-        <div className="space-y-3">
+        <div className="border rounded-lg divide-y">
           {resources.map((resource) => (
-            <Card
+            <div
               key={resource.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className={`
+                flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors
+                hover:bg-muted/50 group
+                ${resource.isItImportantAnnouncement ? 'border-l-3 border-l-blue-500 bg-blue-50/30' : ''}
+              `}
               onClick={() => router.push(`${basePath}/${resource.id}`)}
             >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      {resource.isItImportantAnnouncement && (
-                        <Pin className="w-4 h-4 text-blue-600" />
-                      )}
-                      <h3 className="font-semibold text-gray-900">{resource.announcementTitle}</h3>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                      {resource.announcementContent}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {new Date(resource.createdAt).toLocaleDateString('ko-KR')}
-                    </p>
-                  </div>
-                  {isAdmin && (
-                    <button
-                      onClick={(e) => handleDelete(resource.id, e)}
-                      disabled={isDeleting && deletingId === resource.id}
-                      className="p-2 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </button>
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  {resource.isItImportantAnnouncement && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 px-1.5 py-0 text-xs shrink-0">
+                      <Pin className="w-3 h-3 mr-0.5" />
+                      중요
+                    </Badge>
                   )}
+                  <h3 className="font-semibold text-sm truncate">
+                    {resource.announcementTitle}
+                  </h3>
                 </div>
-              </CardContent>
-            </Card>
+
+                <p className="text-muted-foreground text-xs line-clamp-1">
+                  {resource.announcementContent}
+                </p>
+
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                  <span>{new Date(resource.createdAt).toLocaleDateString('ko-KR')}</span>
+                  <span>·</span>
+                  <span>
+                    {!resource.academyIds || resource.academyIds.length === 0
+                      ? '전체 학원'
+                      : resource.academyIds.map((id) => academyMap.get(id) ?? `학원${id}`).join(', ')}
+                  </span>
+                </div>
+              </div>
+
+              {isAdmin && (
+                <button
+                  onClick={(e) => handleDelete(resource.id, e)}
+                  disabled={isDeleting && deletingId === resource.id}
+                  className="p-1.5 text-muted-foreground/50 hover:text-red-600 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+                  title="삭제"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Create Modal (admin only) */}
+      {isAdmin && (
+        <CreateResourceModal
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+        />
       )}
     </div>
   );

@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SlidersHorizontal } from 'lucide-react';
 
@@ -28,7 +29,9 @@ export interface FilterDefinition {
   label: string;
   value: string;
   defaultValue: string;
-  options: FilterOption[];
+  /** 'select' (기본값) 또는 'date' */
+  type?: 'select' | 'date';
+  options?: FilterOption[];
   onChange: (value: string) => void;
 }
 
@@ -64,18 +67,28 @@ export function TableFilter({ filters, onReset, popoverClassName }: TableFilterP
         {filters.map((filter) => (
           <div key={filter.key} className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{filter.label}</Label>
-            <Select value={filter.value} onValueChange={filter.onChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {filter.options.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {filter.type === 'date' ? (
+              <Input
+                type="date"
+                lang="ko"
+                value={filter.value}
+                onChange={(e) => filter.onChange(e.target.value)}
+                className="h-9"
+              />
+            ) : (
+              <Select value={filter.value} onValueChange={filter.onChange}>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="min-w-[var(--radix-select-trigger-width)]">
+                  {filter.options?.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         ))}
         {activeCount > 0 && (

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, ExternalLink, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -90,29 +92,22 @@ export function GoogleSheetList() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">
-          총 {sheets.length}개의 스프레드시트
-        </div>
+      <PageListHeader title="스프레드시트" count={sheets.length} countUnit="개">
         <Button onClick={() => setIsAddOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           스프레드시트 연결
         </Button>
-      </div>
+      </PageListHeader>
 
       {/* List */}
       {sheets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-muted/50 rounded-lg border-2 border-dashed">
-          <FileSpreadsheet className="w-12 h-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-2">연결된 Google 스프레드시트가 없습니다.</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Google Sheets URL을 추가하여 시작하세요.
-          </p>
-          <Button onClick={() => setIsAddOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            첫 스프레드시트 연결하기
-          </Button>
-        </div>
+        <EmptyState
+          icon={FileSpreadsheet}
+          message="연결된 스프레드시트가 없습니다."
+          description="Google Sheets URL을 추가하여 시작하세요."
+          actionLabel="첫 스프레드시트 연결하기"
+          onAction={() => setIsAddOpen(true)}
+        />
       ) : (
         <div className="bg-card rounded-lg border overflow-hidden">
           <table className="min-w-full divide-y divide-border">

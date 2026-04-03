@@ -8,8 +8,9 @@ import {
   useDeleteTextbookFile,
 } from '@/entities/textbook';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/src/shared/ui/Card';
 import {
@@ -20,7 +21,6 @@ import {
   File,
   FileSpreadsheet,
   Loader2,
-  HardDrive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -169,71 +169,44 @@ export function TextbookList() {
   return (
     <div className="space-y-6">
       {/* Header & Storage Status */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">교재 관리</h1>
-        </div>
-
-        <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="w-full md:w-auto"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                업로드 중...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                교재 업로드
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* Storage Indicator */}
-      <Card className="bg-muted/30 border-none shadow-none" padding="md">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-background rounded-full border shadow-sm">
-            <HardDrive className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <div className="flex justify-between text-sm font-medium">
-              <span>저장 공간 사용량</span>
-              <span className={usagePercentage > 90 ? "text-red-500" : "text-muted-foreground"}>
-                {formatTotalSize(totalSize)} / 10 GB ({usagePercentage.toFixed(1)}%)
-              </span>
-            </div>
-            <Progress
-              value={usagePercentage}
-              className="h-2"
-              indicatorClassName={usagePercentage > 90 ? "bg-red-500" : undefined}
-            />
-          </div>
-        </div>
-      </Card>
+      <PageListHeader title="교재 관리" count={completedFiles.length} countUnit="개">
+        <span className={`text-sm order-last basis-full smalltablet:order-none smalltablet:basis-auto text-center smalltablet:text-right ${usagePercentage > 90 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+          {formatTotalSize(totalSize)} / 10 GB
+        </span>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              업로드 중...
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              교재 업로드
+            </>
+          )}
+        </Button>
+      </PageListHeader>
 
       {/* File Grid */}
       {completedFiles.length === 0 ? (
-        <div className="text-center py-20 bg-muted/50 rounded-lg border border-dashed">
-          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-1">등록된 교재가 없습니다</h3>
-          <p className="text-sm text-muted-foreground mb-4">PDF, Word, Excel 파일을 업로드하여 관리하세요.</p>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-            첫 번째 교재 업로드
-          </Button>
-        </div>
+        <EmptyState
+          icon={FileText}
+          message="등록된 교재가 없습니다."
+          description="PDF, Word, Excel 파일을 업로드하여 관리하세요."
+          actionLabel="첫 번째 교재 업로드"
+          onAction={() => fileInputRef.current?.click()}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {completedFiles.map((file) => (
@@ -257,7 +230,7 @@ export function TextbookList() {
                       {formatFileSize(file.fileSize)}
                     </Badge>
                     <span>•</span>
-                    <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(file.createdAt).toLocaleDateString('ko-KR')}</span>
                   </div>
                 </div>
               </div>

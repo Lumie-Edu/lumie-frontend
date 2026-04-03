@@ -1,10 +1,15 @@
 'use client';
 
 import { useReviewPopupSetting, useUpdateReviewPopupSetting } from '@/entities/review';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/Card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MessageSquare } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
 export function ReviewPopupToggle() {
   const { data: setting, isLoading } = useReviewPopupSetting();
@@ -15,43 +20,30 @@ export function ReviewPopupToggle() {
   };
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex justify-center items-center h-16">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <div className="h-5 w-20 animate-pulse rounded bg-muted" />;
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" />
-          리뷰 팝업 설정
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="review-popup-toggle" className="text-base">
-              홈페이지 리뷰 팝업
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              홈페이지에서 리뷰 팝업을 표시합니다.
-            </p>
-          </div>
-          <Switch
-            id="review-popup-toggle"
-            checked={setting?.isReviewPopupOn ?? false}
-            onCheckedChange={handleToggle}
-            disabled={isPending}
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-2">
+      <Label htmlFor="review-popup-toggle" className="text-sm whitespace-nowrap">
+        리뷰 팝업
+      </Label>
+      <Switch
+        id="review-popup-toggle"
+        checked={setting?.isReviewPopupOn ?? false}
+        onCheckedChange={handleToggle}
+        disabled={isPending}
+      />
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>활성화 시, 학생이 홈페이지에 접속하면<br />리뷰 작성을 요청하는 팝업이 표시됩니다.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }

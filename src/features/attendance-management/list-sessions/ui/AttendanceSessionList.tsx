@@ -12,14 +12,8 @@ import {
 import { useAcademies } from '@/entities/academy';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
+import { TableFilter } from '@/src/shared/ui/TableFilter';
 import {
   Table,
   TableBody,
@@ -44,7 +38,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Plus, MoreHorizontal, Eye, XCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Eye, XCircle, RefreshCw, Trash2, CalendarCheck } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { CreateSessionModal } from '../../create-session/ui/CreateSessionModal';
 
 const PAGE_SIZE = 20;
@@ -155,67 +150,68 @@ export function AttendanceSessionList() {
   return (
     <div className="space-y-4 smalltablet:space-y-6">
       {/* 헤더 */}
-      <div className="flex flex-col smalltablet:flex-row smalltablet:justify-between smalltablet:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl smalltablet:text-3xl font-bold">출석 관리</h1>
-          <Badge variant="secondary" className="text-base smalltablet:text-lg px-3 py-1">
-            총 {totalElements}개
-          </Badge>
-        </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="smalltablet:w-auto w-full">
+      <PageListHeader title="출석 관리" count={totalElements} countUnit="개">
+        <TableFilter
+          filters={[
+            {
+              key: 'academy',
+              label: '학원',
+              value: selectedAcademy,
+              defaultValue: 'all',
+              options: [
+                { value: 'all', label: '전체 학원' },
+                ...academies.map((a) => ({ value: String(a.id), label: a.name })),
+              ],
+              onChange: (v) => { setSelectedAcademy(v); setCurrentPage(0); },
+            },
+            {
+              key: 'status',
+              label: '상태',
+              value: statusFilter,
+              defaultValue: 'all',
+              options: [
+                { value: 'all', label: '전체' },
+                { value: 'OPEN', label: '진행중' },
+                { value: 'CLOSED', label: '종료' },
+              ],
+              onChange: (v) => { setStatusFilter(v); setCurrentPage(0); },
+            },
+            {
+              key: 'dateFrom',
+              label: '시작일',
+              type: 'date',
+              value: dateFrom,
+              defaultValue: '',
+              onChange: (v) => { setDateFrom(v); setCurrentPage(0); },
+            },
+            {
+              key: 'dateTo',
+              label: '종료일',
+              type: 'date',
+              value: dateTo,
+              defaultValue: '',
+              onChange: (v) => { setDateTo(v); setCurrentPage(0); },
+            },
+          ]}
+          onReset={() => setCurrentPage(0)}
+          popoverClassName="w-72"
+        />
+        <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           세션 생성
         </Button>
-      </div>
-
-      {/* 필터 */}
-      <div className="flex flex-col smalltablet:flex-row gap-3">
-        <Select value={selectedAcademy} onValueChange={(value) => { setSelectedAcademy(value); setCurrentPage(0); }}>
-          <SelectTrigger className="flex-1 smalltablet:w-[180px]">
-            <SelectValue placeholder="학원 선택" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 학원</SelectItem>
-            {academies.map((academy) => (
-              <SelectItem key={academy.id} value={String(academy.id)}>
-                {academy.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setCurrentPage(0); }}>
-          <SelectTrigger className="flex-1 smalltablet:w-[140px]">
-            <SelectValue placeholder="상태" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            <SelectItem value="OPEN">진행중</SelectItem>
-            <SelectItem value="CLOSED">종료</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(0); }}
-          className="flex-1 smalltablet:w-[160px]"
-          placeholder="시작일"
-        />
-        <Input
-          type="date"
-          value={dateTo}
-          onChange={(e) => { setDateTo(e.target.value); setCurrentPage(0); }}
-          className="flex-1 smalltablet:w-[160px]"
-          placeholder="종료일"
-        />
-      </div>
+      </PageListHeader>
 
       {/* 목록 */}
       {isLoading ? (
         <SessionListSkeleton />
       ) : sessions.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg">
-          <p className="text-muted-foreground">출석 세션이 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={CalendarCheck}
+          message="출석 세션이 없습니다."
+          actionLabel="세션 생성"
+          onAction={() => setIsCreateOpen(true)}
+        />
       ) : (
         <>
           {/* 모바일 카드 뷰 */}
@@ -234,7 +230,7 @@ export function AttendanceSessionList() {
                         {session.status === 'OPEN' ? '진행중' : '종료'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{session.sessionDate} {session.subject ? `| ${session.subject}` : ''}</p>
+                    <p className="text-sm text-muted-foreground">{new Date(session.sessionDate).toLocaleDateString('ko-KR')} {session.subject ? `| ${session.subject}` : ''}</p>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -295,7 +291,7 @@ export function AttendanceSessionList() {
                     className="cursor-pointer hover:bg-muted/50 text-base"
                     onClick={() => router.push(`/admin/attendance/${session.id}`)}
                   >
-                    <TableCell className="text-center">{session.sessionDate}</TableCell>
+                    <TableCell className="text-center">{new Date(session.sessionDate).toLocaleDateString('ko-KR')}</TableCell>
                     <TableCell className="text-center font-medium">{session.name}</TableCell>
                     <TableCell className="text-center hidden tablet:table-cell">{session.subject || '-'}</TableCell>
                     <TableCell className="text-center">

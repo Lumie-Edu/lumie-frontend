@@ -15,6 +15,7 @@ import { useAcademies } from '@/entities/academy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
@@ -35,7 +36,8 @@ import { TablePagination } from '@/src/shared/ui/TablePagination';
 import { TableFilter } from '@/src/shared/ui/TableFilter';
 import { ViewModeToggle, type ViewMode } from '@/src/shared/ui/ViewModeToggle';
 import { PersonCardGrid, PersonCardGridSkeleton } from '@/src/shared/ui/PersonCardGrid';
-import { Plus, Search, MoreHorizontal, Trash2, Edit, UserMinus, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Trash2, Edit, UserMinus, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, Users } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { EditStudentModal } from '../../edit-student/ui/EditStudentModal';
 import { RegisterStudentModal } from '../../register-student/ui/RegisterStudentModal';
 import { formatPhoneNumber } from '@/src/shared/lib/format';
@@ -268,12 +270,7 @@ export function StudentList() {
   return (
     <div className="space-y-4 smalltablet:space-y-6">
       {/* 헤더 + 검색 + 액션 */}
-      <div className="flex flex-wrap items-center gap-2 smalltablet:gap-3">
-        <h1 className="text-2xl smalltablet:text-3xl font-bold whitespace-nowrap">학생 목록</h1>
-        <Badge variant="secondary" className="text-base px-3 py-1">
-          총 {totalStudents}명
-        </Badge>
-        <div className="flex-1" />
+      <PageListHeader title="학생 목록" count={totalStudents} countUnit="명">
         <div className="relative hidden smalltablet:block smalltablet:w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -326,7 +323,7 @@ export function StudentList() {
           <span className="hidden smalltablet:inline">학생 추가</span>
           <span className="smalltablet:hidden">추가</span>
         </Button>
-      </div>
+      </PageListHeader>
 
       {/* 배치 액션 */}
       {someSelected && (
@@ -369,9 +366,12 @@ export function StudentList() {
       {isLoading ? (
         <StudentListSkeleton viewMode={viewMode} />
       ) : students.length === 0 ? (
-        <div className="text-center py-12 bg-muted/50 rounded-lg">
-          <p className="text-muted-foreground">검색된 학생이 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          message="검색된 학생이 없습니다."
+          actionLabel="학생 추가"
+          onAction={() => setIsRegisterOpen(true)}
+        />
       ) : viewMode === 'card' ? (
         <PersonCardGrid
           items={students.map((s) => ({

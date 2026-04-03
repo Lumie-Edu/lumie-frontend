@@ -74,7 +74,7 @@ export function SessionDetailView({ sessionId }: SessionDetailViewProps) {
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              {session.sessionDate} {session.subject ? `| ${session.subject}` : ''}
+              {new Date(session.sessionDate).toLocaleDateString('ko-KR')} {session.subject ? `| ${session.subject}` : ''}
             </p>
           </div>
         </div>

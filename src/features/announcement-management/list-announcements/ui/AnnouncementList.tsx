@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnnouncements, useDeleteAnnouncement } from '@/entities/announcement';
 import { useAcademies } from '@/entities/academy';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/src/shared/ui/Card';
 import {
   Select,
   SelectContent,
@@ -14,8 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Plus, Trash2, Pin, Bell } from 'lucide-react';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 import { EditAnnouncementModal } from '../../edit-announcement/ui/EditAnnouncementModal';
+import { CreateAnnouncementModal } from '../../create-announcement/ui/CreateAnnouncementModal';
 
 interface AnnouncementListProps {
   isAdmin?: boolean;
@@ -26,12 +28,22 @@ export function AnnouncementList({ isAdmin = false }: AnnouncementListProps) {
   const [selectedAcademy, setSelectedAcademy] = useState<string>('all');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data: academiesData } = useAcademies();
   const { data, isLoading, error } = useAnnouncements({
     academyId: selectedAcademy !== 'all' ? Number(selectedAcademy) : undefined
   });
   const { mutate: deleteAnnouncement, isPending: isDeleting } = useDeleteAnnouncement();
+
+  const academies = academiesData?.content ?? [];
+  const announcements = data?.content ?? [];
+
+  const academyMap = useMemo(() => {
+    const map = new Map<number, string>();
+    academies.forEach((a) => map.set(a.id, a.name));
+    return map;
+  }, [academies]);
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -51,9 +63,6 @@ export function AnnouncementList({ isAdmin = false }: AnnouncementListProps) {
     }
   };
 
-  const academies = academiesData?.content ?? [];
-  const announcements = data?.content ?? [];
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -72,93 +81,99 @@ export function AnnouncementList({ isAdmin = false }: AnnouncementListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">
-            총 <span className="text-gray-900 font-bold">{data?.totalElements ?? 0}</span>개의 공지사항
-          </span>
-        </div>
+      <PageListHeader title="공지사항" count={data?.totalElements ?? 0} countUnit="개">
+        {isAdmin && (
+          <>
+            <Select value={selectedAcademy} onValueChange={setSelectedAcademy}>
+              <SelectTrigger className="order-last basis-full smalltablet:order-none smalltablet:basis-auto w-full smalltablet:w-[180px]">
+                <SelectValue placeholder="학원 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 학원</SelectItem>
+                {academies.map((academy) => (
+                  <SelectItem key={academy.id} value={String(academy.id)}>
+                    {academy.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          {isAdmin && (
-            <>
-              <Select value={selectedAcademy} onValueChange={setSelectedAcademy}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="학원 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 학원</SelectItem>
-                  {academies.map((academy) => (
-                    <SelectItem key={academy.id} value={String(academy.id)}>
-                      {academy.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button onClick={() => router.push('/admin/announcements/new')} className="shrink-0">
-                <Plus className="w-4 h-4 mr-2" />
-                공지 작성
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+            <Button onClick={() => setIsCreateOpen(true)} className="shrink-0">
+              <Plus className="w-4 h-4 mr-2" />
+              공지 작성
+            </Button>
+          </>
+        )}
+      </PageListHeader>
 
       {announcements.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-          <Bell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">등록된 공지사항이 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={Bell}
+          message="등록된 공지사항이 없습니다."
+          actionLabel={isAdmin ? '공지 작성' : undefined}
+          onAction={isAdmin ? () => setIsCreateOpen(true) : undefined}
+        />
       ) : (
-        <div className="space-y-4">
+        <div className="border rounded-lg divide-y">
           {announcements.map((announcement) => (
-            <Card
+            <div
               key={announcement.id}
               className={`
-                cursor-pointer transition-all duration-200 
-                hover:shadow-md hover:-translate-y-1
-                group relative overflow-hidden
-                ${announcement.isItImportantAnnouncement ? 'border-l-4 border-l-blue-500 bg-blue-50/10' : 'hover:border-blue-200'}
+                flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors
+                hover:bg-muted/50 group
+                ${announcement.isItImportantAnnouncement ? 'border-l-3 border-l-blue-500 bg-blue-50/30' : ''}
               `}
               onClick={() => handleCardClick(announcement.id)}
             >
-              <CardContent className="p-5 flex justify-between items-start gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {announcement.isItImportantAnnouncement && (
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-0">
-                        <Pin className="w-3 h-3 mr-1" /> 중요
-                      </Badge>
-                    )}
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {announcement.announcementTitle}
-                    </h3>
-                  </div>
-
-                  <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-                    {announcement.announcementContent}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
-                    <span>{new Date(announcement.createdAt).toLocaleDateString('ko-KR')}</span>
-                  </div>
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  {announcement.isItImportantAnnouncement && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 px-1.5 py-0 text-xs shrink-0">
+                      <Pin className="w-3 h-3 mr-0.5" />
+                      중요
+                    </Badge>
+                  )}
+                  <h3 className="font-semibold text-sm truncate">
+                    {announcement.announcementTitle}
+                  </h3>
                 </div>
 
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDelete(announcement.id, e)}
-                    disabled={isDeleting && deletingId === announcement.id}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    title="삭제"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </CardContent>
-            </Card>
+                <p className="text-muted-foreground text-xs line-clamp-1">
+                  {announcement.announcementContent}
+                </p>
+
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                  <span>{new Date(announcement.createdAt).toLocaleDateString('ko-KR')}</span>
+                  <span>·</span>
+                  <span>
+                    {!announcement.academyIds || announcement.academyIds.length === 0
+                      ? '전체 학원'
+                      : announcement.academyIds.map((id) => academyMap.get(id) ?? `학원${id}`).join(', ')}
+                  </span>
+                </div>
+              </div>
+
+              {isAdmin && (
+                <button
+                  onClick={(e) => handleDelete(announcement.id, e)}
+                  disabled={isDeleting && deletingId === announcement.id}
+                  className="p-1.5 text-muted-foreground/50 hover:text-red-600 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+                  title="삭제"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Create Modal (admin only) */}
+      {isAdmin && (
+        <CreateAnnouncementModal
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+        />
       )}
 
       {/* Edit Modal (admin only) */}

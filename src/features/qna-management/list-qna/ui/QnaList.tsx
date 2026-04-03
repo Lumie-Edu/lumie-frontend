@@ -7,6 +7,15 @@ import { useAcademies } from '@/entities/academy';
 import { Button } from '@/src/shared/ui/Button';
 import { Card, CardContent } from '@/src/shared/ui/Card';
 import { Plus, Trash2, MessageCircle, CheckCircle, Clock } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
+import { EmptyState } from '@/src/shared/ui/EmptyState';
 
 interface QnaListProps {
   isAdmin?: boolean;
@@ -15,7 +24,6 @@ interface QnaListProps {
 const statusConfig = {
   PENDING: { label: '답변 대기', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   ANSWERED: { label: '답변 완료', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  CLOSED: { label: '종료', color: 'bg-gray-100 text-gray-700', icon: CheckCircle },
 };
 
 export function QnaList({ isAdmin = false }: QnaListProps) {
@@ -63,56 +71,49 @@ export function QnaList({ isAdmin = false }: QnaListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Q&A ({data?.totalElements ?? 0}개)
-          </h2>
-          {isAdmin && (
-            <>
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedAcademy ?? ''}
-                onChange={(e) => setSelectedAcademy(e.target.value ? Number(e.target.value) : undefined)}
-              >
-                <option value="">전체 학원</option>
+      <PageListHeader title="Q&A" count={data?.totalElements ?? 0} countUnit="개">
+        {isAdmin && (
+          <>
+            <Select value={String(selectedAcademy ?? 'all')} onValueChange={(v) => setSelectedAcademy(v === 'all' ? undefined : Number(v))}>
+              <SelectTrigger className="order-last basis-full smalltablet:order-none smalltablet:basis-auto w-full smalltablet:w-[180px]">
+                <SelectValue placeholder="전체 학원" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 학원</SelectItem>
                 {academies.map((academy) => (
-                  <option key={academy.id} value={academy.id}>
+                  <SelectItem key={academy.id} value={String(academy.id)}>
                     {academy.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedStatus ?? ''}
-                onChange={(e) => setSelectedStatus(e.target.value || undefined)}
-              >
-                <option value="">전체 상태</option>
-                <option value="PENDING">답변 대기</option>
-                <option value="ANSWERED">답변 완료</option>
-                <option value="CLOSED">종료</option>
-              </select>
-            </>
-          )}
-        </div>
+              </SelectContent>
+            </Select>
+            <Select value={selectedStatus ?? 'all'} onValueChange={(v) => setSelectedStatus(v === 'all' ? undefined : v)}>
+              <SelectTrigger className="order-last basis-full smalltablet:order-none smalltablet:basis-auto w-full smalltablet:w-[150px]">
+                <SelectValue placeholder="전체 상태" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 상태</SelectItem>
+                <SelectItem value="PENDING">답변 대기</SelectItem>
+                <SelectItem value="ANSWERED">답변 완료</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        )}
         {!isAdmin && (
           <Button onClick={() => router.push(`${basePath}/new`)}>
             <Plus className="w-4 h-4 mr-2" />
             질문하기
           </Button>
         )}
-      </div>
+      </PageListHeader>
 
       {qnaItems.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">등록된 Q&A가 없습니다.</p>
-          {!isAdmin && (
-            <Button className="mt-4" onClick={() => router.push(`${basePath}/new`)}>
-              첫 질문하기
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={MessageCircle}
+          message="등록된 Q&A가 없습니다."
+          actionLabel={!isAdmin ? '첫 질문하기' : undefined}
+          onAction={!isAdmin ? () => router.push(`${basePath}/new`) : undefined}
+        />
       ) : (
         <div className="space-y-3">
           {qnaItems.map((qna) => {

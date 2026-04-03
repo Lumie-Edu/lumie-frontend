@@ -152,7 +152,7 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                                     <GradeStatusCell student={student} />
                                 </TableCell>
                                 <TableCell className="text-right text-gray-500 text-xs">
-                                    {new Date(student.submittedAt).toLocaleDateString()}
+                                    {new Date(student.submittedAt).toLocaleDateString('ko-KR')}
                                 </TableCell>
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
