@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQna, useCloseQna } from '@/entities/qna';
+import { useQna } from '@/entities/qna';
 import { AnswerQuestionForm } from '@/features/qna-management';
 import { Button } from '@/src/shared/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/shared/ui/Card';
@@ -18,16 +18,6 @@ export default function AdminQnaDetailPage({ params }: PageProps) {
   const router = useRouter();
 
   const { data: qna, isLoading, error, refetch } = useQna(qnaId);
-  const { mutate: closeQna, isPending: isClosing } = useCloseQna(qnaId);
-
-  const handleClose = () => {
-    if (confirm('이 질문을 종료하시겠습니까?')) {
-      closeQna(undefined, {
-        onSuccess: () => alert('질문이 종료되었습니다.'),
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -75,11 +65,6 @@ export default function AdminQnaDetailPage({ params }: PageProps) {
                   <CheckCircle className="w-3 h-3" />
                   답변 완료
                 </span>
-              )}
-              {qna.status !== 'CLOSED' && (
-                <Button variant="outline" size="sm" onClick={handleClose} loading={isClosing}>
-                  종료
-                </Button>
               )}
             </div>
           </div>

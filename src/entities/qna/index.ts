@@ -15,6 +15,5 @@ export {
   useMyQnaList,
   useCreateQna,
   useAnswerQna,
-  useCloseQna,
   useDeleteQna,
 } from './api/queries';

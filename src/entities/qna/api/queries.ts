@@ -75,18 +75,6 @@ export function useAnswerQna(id: number) {
   });
 }
 
-export function useCloseQna(id: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => contentClient.post<Qna>(`/v1/qna/${id}/close`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
-      toast.success('질문이 종료되었습니다.');
-    },
-  });
-}
-
 export function useDeleteQna() {
   const queryClient = useQueryClient();
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const qnaStatusSchema = z.enum(['PENDING', 'ANSWERED', 'CLOSED']);
+export const qnaStatusSchema = z.enum(['PENDING', 'ANSWERED']);
 export type QnaStatus = z.infer<typeof qnaStatusSchema>;
 
 export const qnaSchema = z.object({
