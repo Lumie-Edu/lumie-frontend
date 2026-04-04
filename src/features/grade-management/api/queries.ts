@@ -17,7 +17,7 @@ export interface GradeExam extends Exam {
 export interface StudentGrade {
     studentId: number;
     studentName: string;
-    studentPhone: string;
+    phoneNumber: string;
     score: number;
     rank: number;
     percentile: number;

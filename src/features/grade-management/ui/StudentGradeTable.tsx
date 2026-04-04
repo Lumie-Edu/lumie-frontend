@@ -141,7 +141,7 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                                     {student.rank}
                                 </TableCell>
                                 <TableCell className="font-medium">{student.studentName}</TableCell>
-                                <TableCell className="text-gray-500">{student.studentPhone || '-'}</TableCell>
+                                <TableCell className="text-gray-500">{student.phoneNumber || '-'}</TableCell>
                                 <TableCell className="text-right font-bold text-indigo-600">
                                     {student.score}점
                                 </TableCell>
