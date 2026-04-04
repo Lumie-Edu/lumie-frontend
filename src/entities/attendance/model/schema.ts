@@ -6,9 +6,6 @@ export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 export const attendanceStatusSchema = z.enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED']);
 export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
 
-export const checkMethodSchema = z.enum(['CODE', 'MANUAL']);
-export type CheckMethod = z.infer<typeof checkMethodSchema>;
-
 export const attendanceSessionSchema = z.object({
   id: z.number(),
   academyId: z.number(),
@@ -37,7 +34,6 @@ export const attendanceRecordSchema = z.object({
   studentId: z.number(),
   studentName: z.string(),
   status: attendanceStatusSchema,
-  checkMethod: checkMethodSchema,
   checkedAt: z.string().nullable().optional(),
   memo: z.string().nullable().optional(),
 });
@@ -52,7 +48,6 @@ export const studentAttendanceRecordSchema = z.object({
   studentId: z.number(),
   studentName: z.string(),
   status: attendanceStatusSchema,
-  checkMethod: checkMethodSchema,
   checkedAt: z.string().nullable().optional(),
   memo: z.string().nullable().optional(),
 });

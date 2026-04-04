@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useAttendanceSession, useCloseSession, useDeleteSession } from '@/entities/attendance';
-import { Badge } from '@/components/ui/badge';
+import { useBreadcrumb } from '@/src/shared/lib/breadcrumb';
+import { PageListHeader } from '@/src/shared/ui/PageListHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, XCircle, Trash2 } from 'lucide-react';
+import { XCircle, Trash2 } from 'lucide-react';
 import { SessionCodeDisplay } from './SessionCodeDisplay';
 import { AttendanceStatisticsBar } from './AttendanceStatisticsBar';
 import { AttendanceTable } from './AttendanceTable';
@@ -19,6 +20,11 @@ export function SessionDetailView({ sessionId }: SessionDetailViewProps) {
   const { data: session, isLoading, error } = useAttendanceSession(sessionId);
   const { mutate: closeSession } = useCloseSession();
   const { mutate: deleteSession } = useDeleteSession();
+
+  useBreadcrumb([
+    { label: '출석 관리', href: '/admin/attendance' },
+    { label: session?.name ?? '' },
+  ]);
 
   const handleClose = () => {
     if (confirm('세션을 종료하시겠습니까?')) {
@@ -61,60 +67,39 @@ export function SessionDetailView({ sessionId }: SessionDetailViewProps) {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex flex-col smalltablet:flex-row smalltablet:items-center smalltablet:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/admin/attendance')}>
-            <ArrowLeft className="h-5 w-5" />
+      <PageListHeader title={session.name}>
+        {isOpen && (
+          <Button variant="outline" onClick={handleClose} className="text-orange-600 border-orange-600">
+            <XCircle className="w-4 h-4 mr-2" />
+            세션 종료
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{session.name}</h1>
-              <Badge variant={isOpen ? 'default' : 'secondary'}>
-                {isOpen ? '진행중' : '종료'}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">
-              {new Date(session.sessionDate).toLocaleDateString('ko-KR')} {session.subject ? `| ${session.subject}` : ''}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {isOpen && (
-            <Button variant="outline" onClick={handleClose} className="text-orange-600 border-orange-600">
-              <XCircle className="w-4 h-4 mr-2" />
-              세션 종료
-            </Button>
-          )}
-          <Button variant="outline" onClick={handleDelete} className="text-red-600 border-red-600">
-            <Trash2 className="w-4 h-4 mr-2" />
-            삭제
-          </Button>
-        </div>
-      </div>
+        )}
+        <Button variant="outline" onClick={handleDelete} className="text-red-600 border-red-600">
+          <Trash2 className="w-4 h-4 mr-2" />
+          삭제
+        </Button>
+      </PageListHeader>
 
-      {/* 출석 코드 */}
-      <div className="rounded-lg border p-6">
-        <h2 className="text-sm font-medium text-muted-foreground mb-2">출석 코드</h2>
-        <SessionCodeDisplay code={session.attendanceCode} sessionId={sessionId} isOpen={isOpen} />
-      </div>
-
-      {/* 통계 */}
-      <div className="rounded-lg border p-6">
-        <h2 className="text-sm font-medium text-muted-foreground mb-3">출석 현황</h2>
-        <AttendanceStatisticsBar
-          presentCount={session.presentCount}
-          absentCount={session.absentCount}
-          lateCount={session.lateCount}
-          excusedCount={session.excusedCount}
-          totalStudents={session.totalStudents}
-        />
+      {/* 출석 코드 + 통계 */}
+      <div className="flex flex-col tablet:flex-row gap-4">
+        <div className="rounded-lg border p-6 tablet:shrink-0">
+          <h2 className="text-sm font-medium text-muted-foreground mb-2">출석 코드</h2>
+          <SessionCodeDisplay code={session.attendanceCode} sessionId={sessionId} isOpen={isOpen} />
+        </div>
+        <div className="rounded-lg border p-6 flex-1 min-w-0">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">출석 현황</h2>
+          <AttendanceStatisticsBar
+            presentCount={session.presentCount}
+            absentCount={session.absentCount}
+            lateCount={session.lateCount}
+            excusedCount={session.excusedCount}
+            totalStudents={session.totalStudents}
+          />
+        </div>
       </div>
 
       {/* 출석 테이블 */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">학생별 출석 현황</h2>
-        <AttendanceTable sessionId={sessionId} isOpen={isOpen} />
-      </div>
+      <AttendanceTable sessionId={sessionId} isOpen={isOpen} />
     </div>
   );
 }

@@ -25,11 +25,6 @@ const STATUS_CONFIG = {
   EXCUSED: { label: '인정', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Shield },
 } as const;
 
-const CHECK_METHOD_LABEL = {
-  CODE: '코드',
-  MANUAL: '수동',
-} as const;
-
 function SummaryCard({
   label,
   count,
@@ -110,7 +105,6 @@ export function AttendanceTab({ studentId }: AttendanceTabProps) {
                   <TableHead className="text-center">날짜</TableHead>
                   <TableHead className="text-center">세션명</TableHead>
                   <TableHead className="text-center">상태</TableHead>
-                  <TableHead className="text-center hidden sm:table-cell">확인 방법</TableHead>
                   <TableHead className="text-center hidden sm:table-cell">체크인 시간</TableHead>
                   <TableHead className="text-center hidden md:table-cell">메모</TableHead>
                 </TableRow>
@@ -132,9 +126,6 @@ export function AttendanceTab({ studentId }: AttendanceTabProps) {
                             {statusConfig.label}
                           </Badge>
                         )}
-                      </TableCell>
-                      <TableCell className="text-center text-sm hidden sm:table-cell">
-                        {CHECK_METHOD_LABEL[record.checkMethod as keyof typeof CHECK_METHOD_LABEL] || record.checkMethod}
                       </TableCell>
                       <TableCell className="text-center text-sm hidden sm:table-cell">
                         {record.checkedAt ? formatTime(record.checkedAt) : '-'}

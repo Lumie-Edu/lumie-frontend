@@ -264,7 +264,11 @@ export function AttendanceSessionList() {
                 </div>
                 <div className="mt-2 flex gap-3 text-sm text-muted-foreground">
                   <span>코드: <span className="font-mono font-medium text-foreground">{session.attendanceCode}</span></span>
-                  <span>학생: {session.totalStudents}명</span>
+                  <span>출석률: {(() => {
+                    const rate = session.totalStudents > 0 ? Math.round(((session.presentCount + session.lateCount) / session.totalStudents) * 100) : 0;
+                    const color = rate >= 80 ? 'text-green-600' : rate >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    return <span className={`font-medium ${color}`}>{rate}%</span>;
+                  })()}</span>
                 </div>
               </div>
             ))}
@@ -280,7 +284,7 @@ export function AttendanceSessionList() {
                   <TableHead className="text-center hidden tablet:table-cell">과목</TableHead>
                   <TableHead className="text-center">상태</TableHead>
                   <TableHead className="text-center hidden tablet:table-cell">코드</TableHead>
-                  <TableHead className="text-center">출석현황</TableHead>
+                  <TableHead className="text-center">출석률</TableHead>
                   <TableHead className="w-[8%]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -303,13 +307,12 @@ export function AttendanceSessionList() {
                       <span className="font-mono">{session.attendanceCode}</span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="text-green-600">{session.presentCount}</span>
-                      /
-                      <span className="text-red-600">{session.absentCount}</span>
-                      /
-                      <span className="text-yellow-600">{session.lateCount}</span>
-                      /
-                      <span>{session.totalStudents}</span>
+                      {(() => {
+                        if (session.totalStudents === 0) return '-';
+                        const rate = Math.round(((session.presentCount + session.lateCount) / session.totalStudents) * 100);
+                        const color = rate >= 80 ? 'text-green-600' : rate >= 50 ? 'text-yellow-600' : 'text-red-600';
+                        return <span className={`font-medium ${color}`}>{rate}%</span>;
+                      })()}
                     </TableCell>
                     <TableCell className="text-center">
                       <DropdownMenu>

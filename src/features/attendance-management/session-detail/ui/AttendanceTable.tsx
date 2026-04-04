@@ -31,7 +31,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   PRESENT: '출석',
   ABSENT: '결석',
   LATE: '지각',
-  EXCUSED: '사유',
+  EXCUSED: '조퇴',
 };
 
 const STATUS_COLORS: Record<AttendanceStatus, string> = {
@@ -118,7 +118,7 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
             지각
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleBulkUpdate('EXCUSED')} disabled={isBulkUpdating} className="text-blue-600 border-blue-600">
-            사유
+            조퇴
           </Button>
         </div>
       )}
@@ -139,7 +139,6 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
                 {record.checkedAt && (
                   <p className="text-xs text-muted-foreground">
                     {new Date(record.checkedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    {record.checkMethod === 'CODE' && ' (코드)'}
                   </p>
                 )}
               </div>
@@ -153,7 +152,7 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
                   <SelectItem value="PRESENT">출석</SelectItem>
                   <SelectItem value="ABSENT">결석</SelectItem>
                   <SelectItem value="LATE">지각</SelectItem>
-                  <SelectItem value="EXCUSED">사유</SelectItem>
+                  <SelectItem value="EXCUSED">조퇴</SelectItem>
                 </SelectContent>
               </Select>
             ) : (
@@ -177,7 +176,6 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
               )}
               <TableHead className="text-center">학생명</TableHead>
               <TableHead className="text-center">상태</TableHead>
-              <TableHead className="text-center">체크인 방법</TableHead>
               <TableHead className="text-center">체크인 시간</TableHead>
               <TableHead className="text-center hidden tablet:table-cell">메모</TableHead>
             </TableRow>
@@ -204,7 +202,7 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
                         <SelectItem value="PRESENT">출석</SelectItem>
                         <SelectItem value="ABSENT">결석</SelectItem>
                         <SelectItem value="LATE">지각</SelectItem>
-                        <SelectItem value="EXCUSED">사유</SelectItem>
+                        <SelectItem value="EXCUSED">조퇴</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
@@ -212,9 +210,6 @@ export function AttendanceTable({ sessionId, isOpen }: AttendanceTableProps) {
                       {STATUS_LABELS[record.status]}
                     </span>
                   )}
-                </TableCell>
-                <TableCell className="text-center">
-                  {record.checkMethod === 'CODE' ? '코드' : '수동'}
                 </TableCell>
                 <TableCell className="text-center">
                   {record.checkedAt

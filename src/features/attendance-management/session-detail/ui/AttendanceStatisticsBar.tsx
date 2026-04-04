@@ -35,7 +35,7 @@ export function AttendanceStatisticsBar({
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-blue-500" />
-          사유 {excusedCount}
+          조퇴 {excusedCount}
         </span>
         <span className="text-muted-foreground ml-auto">
           총 {totalStudents}명
