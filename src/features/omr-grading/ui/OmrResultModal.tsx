@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, XCircle, Phone, ShieldAlert, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -33,7 +33,7 @@ export function OmrResultModal({ notification, open, onClose }: OmrResultModalPr
 
     const { result, examName, examId } = notification;
     const results = (result.results ?? []) as BatchOmrResult[];
-    const { successCount, failCount, savedCount, totalImages } = result;
+    const { successCount, failCount, totalImages } = result;
     const avgScore = successCount > 0
         ? Math.round(
             results
@@ -79,7 +79,7 @@ export function OmrResultModal({ notification, open, onClose }: OmrResultModalPr
                                 {result.processedImages} / {totalImages}장
                             </span>
                         </div>
-                        <div className="grid grid-cols-5 gap-3">
+                        <div className="grid grid-cols-4 gap-3">
                             <div className="bg-gray-50 rounded-lg p-3 text-center">
                                 <p className="text-xs text-gray-500">총 인원</p>
                                 <p className="text-lg font-bold text-gray-900">{totalImages}</p>
@@ -87,10 +87,6 @@ export function OmrResultModal({ notification, open, onClose }: OmrResultModalPr
                             <div className="bg-emerald-50 rounded-lg p-3 text-center">
                                 <p className="text-xs text-emerald-600">성공</p>
                                 <p className="text-lg font-bold text-emerald-700">{successCount}</p>
-                            </div>
-                            <div className="bg-indigo-50 rounded-lg p-3 text-center">
-                                <p className="text-xs text-indigo-600">저장</p>
-                                <p className="text-lg font-bold text-indigo-700">{savedCount}</p>
                             </div>
                             <div className="bg-red-50 rounded-lg p-3 text-center">
                                 <p className="text-xs text-red-600">실패</p>
@@ -106,7 +102,18 @@ export function OmrResultModal({ notification, open, onClose }: OmrResultModalPr
                     {/* Individual results */}
                     <div className="px-6 py-4 space-y-2">
                         {results.length > 0 ? (
-                            results.map((r, i) => (
+                            [...results]
+                                .sort((a, b) => {
+                                    // Unregistered students (no studentName) first
+                                    const aUnreg = a.success && !a.studentName ? 0 : 1;
+                                    const bUnreg = b.success && !b.studentName ? 0 : 1;
+                                    if (aUnreg !== bUnreg) return aUnreg - bUnreg;
+                                    // Then by grade ascending (lower grade = better)
+                                    const aGrade = a.grade ?? Infinity;
+                                    const bGrade = b.grade ?? Infinity;
+                                    return aGrade - bGrade;
+                                })
+                                .map((r, i) => (
                                 <ResultRow key={r.fileName + i} result={r} index={i} examId={examId} />
                             ))
                         ) : (
@@ -136,24 +143,18 @@ function ResultRow({ result, index, examId }: { result: BatchOmrResult; index: n
     const phoneDisplay = result.phoneNumber ? formatPhoneNumber(result.phoneNumber) : '-';
 
     return (
-        <div className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg border",
-            result.saved ? "border-gray-200" : "border-amber-300 bg-amber-50/30"
-        )}>
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200">
             <span className="w-7 h-7 flex items-center justify-center bg-gray-100 rounded-full text-xs font-bold text-gray-500 shrink-0">
                 {index + 1}
             </span>
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <span className="text-sm font-medium text-gray-900">{phoneDisplay}</span>
-                {result.studentName && (
-                    <span className="text-xs text-gray-500 truncate">({result.studentName})</span>
-                )}
-                {result.saved ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                ) : (
-                    <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                )}
+                <span className={cn(
+                    "text-sm font-medium truncate",
+                    result.studentName ? "text-gray-900" : "text-red-500"
+                )}>
+                    {result.studentName || '미등록 학생'}
+                </span>
+                <span className="text-xs text-gray-500 shrink-0">{phoneDisplay}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
                 {result.resultId && (

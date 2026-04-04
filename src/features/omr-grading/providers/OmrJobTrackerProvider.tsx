@@ -81,8 +81,14 @@ function sendBrowserNotification(title: string, body: string) {
 }
 
 export function OmrJobTrackerProvider({ children }: { children: ReactNode }) {
-    const [activeJob, setActiveJob] = useState<ActiveJob | null>(() => getStored(ACTIVE_JOB_KEY));
-    const [notification, setNotification] = useState<OmrNotification | null>(() => getStored(NOTIFICATION_KEY));
+    const [activeJob, setActiveJob] = useState<ActiveJob | null>(null);
+    const [notification, setNotification] = useState<OmrNotification | null>(null);
+
+    // Hydrate from localStorage after mount to avoid SSR mismatch
+    useEffect(() => {
+        setActiveJob(getStored(ACTIVE_JOB_KEY));
+        setNotification(getStored(NOTIFICATION_KEY));
+    }, []);
 
     const trackJob = useCallback((jobId: number, examId: number, examName: string) => {
         const job = { jobId, examId, examName };
