@@ -5,7 +5,6 @@
 
 REGISTRY = 'zot.lumie-infra.com'
 NAMESPACE = 'lumie-dev'
-DEV_DOMAIN = 'dev.lumie-edu.com'
 
 # Environment variables
 ENV_VARS = {
@@ -103,67 +102,8 @@ spec:
     protocol: TCP
 ''' % NAMESPACE
 
-# Ingress YAML (Traefik)
-ingress_yaml = '''
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: lumie-frontend-ingress
-  namespace: %s
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares: lumie-dev-cors@kubernetescrd
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - %s
-    secretName: lumie-dev-tls
-  rules:
-  - host: %s
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: lumie-frontend
-            port:
-              number: 3000
-''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
-
-# CORS Middleware for development
-cors_middleware_yaml = '''
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: lumie-dev-cors
-  namespace: %s
-spec:
-  headers:
-    accessControlAllowMethods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-    accessControlAllowHeaders:
-    - Accept
-    - Authorization
-    - Content-Type
-    - X-Tenant-Slug
-    accessControlExposeHeaders:
-    - X-Request-Id
-    accessControlAllowOriginList:
-    - "https://%s"
-    - "http://%s"
-    accessControlAllowCredentials: true
-    accessControlMaxAge: 3600
-''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
-
 # Combine all YAML for frontend
-combined_yaml = deployment_yaml + '\n---\n' + service_yaml + '\n---\n' + ingress_yaml + '\n---\n' + cors_middleware_yaml
+combined_yaml = deployment_yaml + '\n---\n' + service_yaml
 
 # Apply YAML using k8s_yaml (handles automatic image tag injection)
 k8s_yaml(blob(combined_yaml))
