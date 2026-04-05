@@ -36,11 +36,11 @@ export default function GradeManagementPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden bg-white">
-            {/* Sidebar - 모바일: 콘텐츠 활성 시 숨김, tablet+: 항상 표시 */}
+        <div className="flex -m-6 bg-white min-h-[calc(100svh-3.5rem)]">
+            {/* Sidebar - 모바일: 콘텐츠 활성 시 숨김, tablet+: sticky로 고정 */}
             <div className={cn(
-                "h-full shrink-0 tablet:block tablet:w-auto",
-                isContentActive ? "hidden" : "w-full"
+                "shrink-0 tablet:block tablet:w-auto tablet:sticky tablet:top-14 tablet:self-start tablet:h-[calc(100svh-3.5rem)]",
+                isContentActive ? "hidden" : "w-full min-h-[calc(100svh-3.5rem)]"
             )}>
                 <GradeSidebar
                     selectedExamId={selectedExam?.id ?? null}
@@ -50,10 +50,10 @@ export default function GradeManagementPage() {
                 />
             </div>
 
-            {/* Dashboard - 모바일: 콘텐츠 비활성 시 숨김, tablet+: 항상 표시 */}
+            {/* Dashboard - 모바일: 콘텐츠 비활성 시 숨김, tablet+: flex-1로 자연스럽게 확장 */}
             <div className={cn(
-                "h-full tablet:flex tablet:flex-1",
-                isContentActive ? "flex flex-1" : "hidden"
+                "tablet:flex tablet:flex-1 tablet:min-w-0",
+                isContentActive ? "flex flex-1 min-w-0" : "hidden"
             )}>
                 <GradeDashboard
                     selectedExam={selectedExam}

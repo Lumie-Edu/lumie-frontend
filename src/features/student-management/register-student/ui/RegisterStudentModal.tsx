@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -38,9 +39,11 @@ function generateRandomString(): string {
 interface RegisterStudentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialPhone?: string;
+  onSuccess?: () => void;
 }
 
-export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModalProps) {
+export function RegisterStudentModal({ open, onOpenChange, initialPhone, onSuccess }: RegisterStudentModalProps) {
   const router = useRouter();
   const { data: academiesData } = useAcademies();
   const { mutate: createStudent, isPending, error } = useCreateStudent();
@@ -57,12 +60,26 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
       userLoginId: generateRandomString(),
       password: generateRandomString(),
       name: '',
-      phone: '',
+      phone: initialPhone ?? '',
       parentPhone: '',
       studentHighschool: '',
       studentMemo: '',
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        userLoginId: generateRandomString(),
+        password: generateRandomString(),
+        name: '',
+        phone: initialPhone ?? '',
+        parentPhone: '',
+        studentHighschool: '',
+        studentMemo: '',
+      });
+    }
+  }, [open, initialPhone, reset]);
 
   const onSubmit = (data: CreateStudentInput) => {
     createStudent(data, {
@@ -77,6 +94,7 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
           studentMemo: '',
         });
         onOpenChange(false);
+        onSuccess?.();
       },
     });
   };
@@ -158,6 +176,8 @@ export function RegisterStudentModal({ open, onOpenChange }: RegisterStudentModa
               id="phone"
               type="tel"
               placeholder="01012345678"
+              readOnly={!!initialPhone}
+              className={initialPhone ? 'bg-gray-100 cursor-not-allowed' : ''}
               {...register('phone')}
             />
           </div>

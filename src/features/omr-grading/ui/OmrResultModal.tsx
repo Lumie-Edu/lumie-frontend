@@ -108,10 +108,10 @@ export function OmrResultModal({ notification, open, onClose }: OmrResultModalPr
                                     const aUnreg = a.success && !a.studentName ? 0 : 1;
                                     const bUnreg = b.success && !b.studentName ? 0 : 1;
                                     if (aUnreg !== bUnreg) return aUnreg - bUnreg;
-                                    // Then by grade ascending (lower grade = better)
-                                    const aGrade = a.grade ?? Infinity;
-                                    const bGrade = b.grade ?? Infinity;
-                                    return aGrade - bGrade;
+                                    // Then by score descending (higher score = better)
+                                    const aScore = a.totalScore ?? -Infinity;
+                                    const bScore = b.totalScore ?? -Infinity;
+                                    return bScore - aScore;
                                 })
                                 .map((r, i) => (
                                 <ResultRow key={r.fileName + i} result={r} index={i} examId={examId} />

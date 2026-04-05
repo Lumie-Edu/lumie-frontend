@@ -31,7 +31,7 @@ export function ChoiceAnalysisTable({ examId }: ChoiceAnalysisTableProps) {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm min-w-0 max-w-full">
             <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                     <h3 className="text-base font-bold text-gray-900">문항별 선지 분석</h3>
@@ -39,7 +39,7 @@ export function ChoiceAnalysisTable({ examId }: ChoiceAnalysisTableProps) {
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="w-full max-w-full overflow-x-auto">
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow>

@@ -15,9 +15,10 @@ export interface GradeExam extends Exam {
 }
 
 export interface StudentGrade {
-    studentId: number;
+    studentId: number | null;
     studentName: string;
     phoneNumber: string;
+    isRegistered: boolean;
     score: number;
     rank: number;
     percentile: number;
@@ -93,7 +94,7 @@ export interface AcademyComparison {
 }
 
 // Keys
-const QUERY_KEYS = {
+export const QUERY_KEYS = {
     all: ['grade-management'] as const,
     exams: (params?: Record<string, unknown>) => [...QUERY_KEYS.all, 'exams', params] as const,
     examDetail: (examId: number) => [...QUERY_KEYS.all, 'detail', examId] as const,
