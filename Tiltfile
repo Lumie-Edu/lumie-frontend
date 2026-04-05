@@ -112,7 +112,7 @@ metadata:
   namespace: %s
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares: %s-lumie-dev-cors@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: lumie-dev-cors@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
@@ -130,7 +130,7 @@ spec:
             name: lumie-frontend
             port:
               number: 3000
-''' % (NAMESPACE, NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
+''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
 
 # CORS Middleware for development
 cors_middleware_yaml = '''
