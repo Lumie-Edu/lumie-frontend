@@ -35,8 +35,12 @@ export {
   useMyExamResults,
   useStudentExamResults,
   useQuestionResults,
+  useUpdateQuestionAnswer,
+  useDeleteExamResult,
   useGenerateReport,
   buildReportUrl,
 } from './api/queries';
 
 export { ExamCard } from './ui/ExamCard';
+export { QuestionResultsTable } from './ui/QuestionResultsTable';
+export { IncorrectQuestionsCard } from './ui/IncorrectQuestionsCard';

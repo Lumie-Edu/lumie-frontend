@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useStudentGrades, StudentGrade } from '../api/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { useStudentGrades, StudentGrade, QUERY_KEYS } from '../api/queries';
+import { RegisterStudentModal } from '@/features/student-management/register-student/ui/RegisterStudentModal';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
@@ -16,9 +18,21 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, UserPlus, Trash2, Loader2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useDeleteExamResult } from '@/entities/exam';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OmrImageButton } from '@/features/omr-grading';
+import { toast } from 'sonner';
 
 interface StudentGradeTableProps {
     examId: number;
@@ -84,7 +98,11 @@ function generatePaginationItems(currentPage: number, totalPages: number) {
 
 export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTableProps) {
     const [page, setPage] = useState(0);
+    const [registerPhone, setRegisterPhone] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<StudentGrade | null>(null);
     const pageSize = 20;
+    const queryClient = useQueryClient();
+    const deleteResultMutation = useDeleteExamResult();
 
     const { data, isLoading } = useStudentGrades(examId, { page, size: pageSize });
 
@@ -98,7 +116,7 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
     const isGraded = students.length > 0 && students[0].examCategory === 'GRADED';
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm min-w-0 max-w-full">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <h3 className="text-base font-bold text-gray-900">학생별 성적 상세</h3>
@@ -110,6 +128,7 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                 </Button>
             </div>
 
+            <div className="w-full max-w-full overflow-x-auto">
             <Table>
                 <TableHeader className="bg-gray-50/50">
                     <TableRow>
@@ -135,12 +154,20 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                             <TableRow
                                 key={`${student.studentId}-${index}`}
                                 className="hover:bg-gray-50/50 cursor-pointer"
-                                onClick={() => onStudentSelect?.(student)}
+                                onClick={() => {
+                                    if (!student.isRegistered) {
+                                        toast.info('미등록 학생은 성적 상세를 제공하지 않습니다. 먼저 학생을 등록해 주세요.');
+                                        return;
+                                    }
+                                    onStudentSelect?.(student);
+                                }}
                             >
                                 <TableCell className="text-center font-medium text-gray-700">
                                     {student.rank}
                                 </TableCell>
-                                <TableCell className="font-medium">{student.studentName}</TableCell>
+                                <TableCell className={student.isRegistered ? "font-medium" : "font-medium text-red-600"}>
+                                    {student.isRegistered ? student.studentName : '미등록'}
+                                </TableCell>
                                 <TableCell className="text-gray-500">{student.phoneNumber || '-'}</TableCell>
                                 <TableCell className="text-right font-bold text-indigo-600">
                                     {student.score}점
@@ -157,13 +184,36 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
                                         <OmrImageButton examId={examId} resultId={student.resultId} size="icon" />
+                                        {!student.isRegistered && student.phoneNumber && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-indigo-600 hover:text-indigo-700"
+                                                title="학생 등록"
+                                                onClick={() => setRegisterPhone(student.phoneNumber)}
+                                            >
+                                                <UserPlus className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                        {student.isRegistered && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-gray-400 hover:text-indigo-600"
+                                                title="성적 상세"
+                                                onClick={() => onStudentSelect?.(student)}
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-gray-400 hover:text-indigo-600"
-                                            onClick={() => onStudentSelect?.(student)}
+                                            className="h-8 w-8 text-gray-400 hover:text-red-600"
+                                            title="시험 성적 삭제"
+                                            onClick={() => setDeleteTarget(student)}
                                         >
-                                            <FileText className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </TableCell>
@@ -172,6 +222,7 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                     )}
                 </TableBody>
             </Table>
+            </div>
 
             {totalPages > 1 && (
                 <div className="p-4 border-t border-gray-100 flex items-center justify-between">
@@ -212,6 +263,53 @@ export function StudentGradeTable({ examId, onStudentSelect }: StudentGradeTable
                     </Pagination>
                 </div>
             )}
+
+            <RegisterStudentModal
+                open={registerPhone !== null}
+                onOpenChange={(open) => { if (!open) setRegisterPhone(null); }}
+                initialPhone={registerPhone ?? undefined}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentGrades(examId) });
+                    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.examStats(examId) });
+                }}
+            />
+
+            <AlertDialog
+                open={deleteTarget !== null}
+                onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>시험 성적 삭제</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {deleteTarget?.isRegistered ? deleteTarget?.studentName : '미등록 학생'}의 이 시험 성적을 삭제하시겠습니까?
+                            삭제된 성적과 OMR 이미지는 복구할 수 없습니다.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            disabled={deleteResultMutation.isPending}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (!deleteTarget) return;
+                                deleteResultMutation.mutate(
+                                    { examId, resultId: deleteTarget.resultId },
+                                    { onSuccess: () => setDeleteTarget(null) },
+                                );
+                            }}
+                        >
+                            {deleteResultMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                                <Trash2 className="w-4 h-4 mr-2" />
+                            )}
+                            삭제
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

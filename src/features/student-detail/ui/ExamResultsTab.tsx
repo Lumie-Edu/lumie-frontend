@@ -18,13 +18,13 @@ import {
   TrendingUp,
   Trophy,
   AlertTriangle,
-  ArrowLeft,
 } from 'lucide-react';
 import { formatDate } from '@/src/shared/lib/format';
-import { ExamDetailView } from './ExamDetailView';
+import { StudentDetailPanel } from '@/features/grade-management/ui/StudentDetailPanel';
 
 interface ExamResultsTabProps {
   studentId: number;
+  studentName: string;
 }
 
 const chartConfig = {
@@ -67,7 +67,7 @@ function getGradeLabel(grade: number | undefined | null): string {
   return `${grade}등급`;
 }
 
-export function ExamResultsTab({ studentId }: ExamResultsTabProps) {
+export function ExamResultsTab({ studentId, studentName }: ExamResultsTabProps) {
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
 
@@ -86,20 +86,6 @@ export function ExamResultsTab({ studentId }: ExamResultsTabProps) {
           <Skeleton className="h-64 rounded-xl tablet:w-1/2" />
         </div>
       </div>
-    );
-  }
-
-  if (selectedResultId && selectedExamId) {
-    return (
-      <ExamDetailView
-        studentId={studentId}
-        resultId={selectedResultId}
-        examId={selectedExamId}
-        onBack={() => {
-          setSelectedResultId(null);
-          setSelectedExamId(null);
-        }}
-      />
     );
   }
 
@@ -229,6 +215,19 @@ export function ExamResultsTab({ studentId }: ExamResultsTabProps) {
             ))}
           </div>
         </div>
+      )}
+
+      {selectedResultId != null && selectedExamId != null && (
+        <StudentDetailPanel
+          studentId={studentId}
+          studentName={studentName}
+          examId={selectedExamId}
+          resultId={selectedResultId}
+          onClose={() => {
+            setSelectedResultId(null);
+            setSelectedExamId(null);
+          }}
+        />
       )}
     </div>
   );

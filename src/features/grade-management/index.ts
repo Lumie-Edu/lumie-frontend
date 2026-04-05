@@ -4,7 +4,7 @@ export { GradeDashboard } from './ui/GradeDashboard';
 export { GradeStatisticsView } from './ui/GradeStatistics';
 export { StudentGradeTable } from './ui/StudentGradeTable';
 export { ChoiceAnalysisTable } from './ui/ChoiceAnalysisTable';
-export { TypeGrowthChart } from './ui/TypeGrowthChart';
+export { TypeGrowthRanking } from './ui/TypeGrowthRanking';
 export { StabilityChart } from './ui/StabilityChart';
 export { GoalSimulator } from './ui/GoalSimulator';
 export { StudentDetailPanel } from './ui/StudentDetailPanel';

@@ -174,6 +174,70 @@ export function useQuestionResults(resultId: number) {
   });
 }
 
+interface UpdateQuestionAnswerParams {
+  examId: number;
+  resultId: number;
+  questionResultId: number;
+  selectedChoice: string;
+}
+
+interface DeleteExamResultParams {
+  examId: number;
+  resultId: number;
+}
+
+export function useDeleteExamResult() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ examId, resultId }: DeleteExamResultParams) =>
+      examClient.delete<void>(`/v1/exams/${examId}/results/${resultId}`),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.results(variables.examId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const root = query.queryKey[0];
+          return root === 'statistics' || root === 'grade-management';
+        },
+      });
+      toast.success('시험 성적이 삭제되었습니다.');
+    },
+    onError: () => {
+      toast.error('시험 성적 삭제에 실패했습니다.');
+    },
+  });
+}
+
+export function useUpdateQuestionAnswer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ examId, resultId, questionResultId, selectedChoice }: UpdateQuestionAnswerParams) =>
+      examClient.patch<QuestionResult>(
+        `/v1/exams/${examId}/results/${resultId}/questions/${questionResultId}`,
+        { selectedChoice },
+      ),
+    onSuccess: (updated, variables) => {
+      queryClient.setQueryData<QuestionResult[]>(
+        QUERY_KEYS.questionResults(variables.resultId),
+        (prev) => prev?.map((q) => (q.id === updated.id ? updated : q)),
+      );
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.results(variables.examId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.all });
+      // 성적관리/통계 쿼리도 함께 갱신 (점수 요약, 등수, 학생 성적표 등)
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const root = query.queryKey[0];
+          return root === 'statistics' || root === 'grade-management';
+        },
+      });
+      toast.success('답안이 수정되었습니다.');
+    },
+    onError: () => {
+      toast.error('답안 수정에 실패했습니다.');
+    },
+  });
+}
+
 // Report Generation
 export function buildReportUrl(
   baseUrl: string,

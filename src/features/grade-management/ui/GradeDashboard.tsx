@@ -40,7 +40,6 @@ function GradingTypeToggle({
 
     return (
         <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 mr-1">평가 방식:</span>
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
                 <button
                     onClick={() => handleChange('RELATIVE')}
@@ -92,7 +91,6 @@ function GradeScaleToggle({
 
     return (
         <div className={cn("flex items-center gap-2", disabled && "opacity-50")}>
-            <span className="text-sm text-gray-500 mr-1">등급 체계:</span>
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
                 <button
                     onClick={() => handleChange('NINE_GRADE')}
@@ -165,9 +163,9 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
     ];
 
     return (
-        <div className="flex-1 flex flex-col h-full bg-gray-50/50 overflow-hidden">
+        <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden bg-gray-50/50">
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
+            <div className="flex items-center justify-between px-4 tablet:px-8 py-4 tablet:py-5 bg-white border-b border-gray-200">
                 <div className="flex items-center gap-3">
                     {onBack && (
                         <Button
@@ -197,7 +195,7 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
             </div>
 
             {/* Tab Navigation */}
-            <div className="px-8 pt-6 flex items-center justify-between">
+            <div className="px-4 tablet:px-8 pt-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="inline-flex bg-white border border-gray-200 rounded-lg p-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
@@ -238,7 +236,7 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-8 pt-6">
+            <div className="flex-1 min-w-0 w-full max-w-full p-4 tablet:p-8 pt-6">
                 {activeTab === 'overview' && (
                     <GradeStatisticsView examId={selectedExam.id} />
                 )}
@@ -254,11 +252,12 @@ export function GradeDashboard({ selectedExam, isCreateMode, onCreateSuccess, on
             </div>
 
             {/* Student Detail Panel */}
-            {selectedStudent && (
+            {selectedStudent && selectedStudent.studentId != null && (
                 <StudentDetailPanel
                     studentId={selectedStudent.studentId}
                     studentName={selectedStudent.studentName}
                     examId={selectedExam.id}
+                    resultId={selectedStudent.resultId}
                     onClose={() => setSelectedStudent(null)}
                 />
             )}

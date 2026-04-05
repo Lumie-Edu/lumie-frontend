@@ -9,8 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { ENV } from '@/src/shared/config/env';
-import { storage } from '@/src/shared/lib/storage';
+import { fetchOmrImageBlob } from '../lib/fetchOmrImageBlob';
 
 interface OmrImageButtonProps {
     examId: number;
@@ -18,20 +17,6 @@ interface OmrImageButtonProps {
     variant?: 'default' | 'ghost' | 'outline';
     size?: 'default' | 'sm' | 'icon';
     label?: string;
-}
-
-async function fetchOmrImageBlob(examId: number, resultId: number): Promise<string> {
-    const tenantSlug = storage.getTenantSlug();
-    const response = await fetch(
-        `${ENV.EXAM_SERVICE_URL}/v1/exams/${examId}/results/${resultId}/omr-image`,
-        {
-            credentials: 'include',
-            headers: tenantSlug ? { 'X-Tenant-Slug': tenantSlug } : {},
-        }
-    );
-    if (!response.ok) throw new Error();
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
 }
 
 export function OmrImageButton({

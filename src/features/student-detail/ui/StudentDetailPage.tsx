@@ -53,7 +53,7 @@ export function StudentDetailPage({ studentId }: StudentDetailPageProps) {
       <DetailLayout
         sidebar={<StudentInfoTab student={student} />}
         tabs={[
-          { value: 'exams', label: '시험 성적', content: <ExamResultsTab studentId={student.id} /> },
+          { value: 'exams', label: '시험 성적', content: <ExamResultsTab studentId={student.id} studentName={student.name} /> },
           { value: 'attendance', label: '출석', content: <AttendanceTab studentId={student.id} /> },
         ]}
         defaultTab="exams"
