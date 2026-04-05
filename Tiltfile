@@ -103,7 +103,7 @@ spec:
     protocol: TCP
 ''' % NAMESPACE
 
-# Ingress YAML (Kong)
+# Ingress YAML (Traefik)
 ingress_yaml = '''
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -112,9 +112,9 @@ metadata:
   namespace: %s
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    konghq.com/plugins: lumie-dev-cors
+    traefik.ingress.kubernetes.io/router.middlewares: %s-lumie-dev-cors@kubernetescrd
 spec:
-  ingressClassName: kong
+  ingressClassName: traefik
   tls:
   - hosts:
     - %s
@@ -130,40 +130,40 @@ spec:
             name: lumie-frontend
             port:
               number: 3000
-''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
+''' % (NAMESPACE, NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
 
-# CORS Plugin for development
-cors_plugin_yaml = '''
-apiVersion: configuration.konghq.com/v1
-kind: KongPlugin
+# CORS Middleware for development
+cors_middleware_yaml = '''
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
 metadata:
   name: lumie-dev-cors
   namespace: %s
-config:
-  origins:
-  - "https://%s"
-  - "http://%s"
-  methods:
-  - GET
-  - POST
-  - PUT
-  - PATCH
-  - DELETE
-  - OPTIONS
+spec:
   headers:
-  - Accept
-  - Authorization
-  - Content-Type
-  - X-Tenant-Slug
-  exposed_headers:
-  - X-Request-Id
-  credentials: true
-  max_age: 3600
-plugin: cors
+    accessControlAllowMethods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+    accessControlAllowHeaders:
+    - Accept
+    - Authorization
+    - Content-Type
+    - X-Tenant-Slug
+    accessControlExposeHeaders:
+    - X-Request-Id
+    accessControlAllowOriginList:
+    - "https://%s"
+    - "http://%s"
+    accessControlAllowCredentials: true
+    accessControlMaxAge: 3600
 ''' % (NAMESPACE, DEV_DOMAIN, DEV_DOMAIN)
 
 # Combine all YAML for frontend
-combined_yaml = deployment_yaml + '\n---\n' + service_yaml + '\n---\n' + ingress_yaml + '\n---\n' + cors_plugin_yaml
+combined_yaml = deployment_yaml + '\n---\n' + service_yaml + '\n---\n' + ingress_yaml + '\n---\n' + cors_middleware_yaml
 
 # Apply YAML using k8s_yaml (handles automatic image tag injection)
 k8s_yaml(blob(combined_yaml))
